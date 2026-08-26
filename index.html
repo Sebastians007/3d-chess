@@ -48,6 +48,20 @@ body{
 #scene:active{ cursor:grabbing; }
 #root{ display:none; }
 
+/* ---------- boot banner (loading / engine errors) ---------- */
+#boot-banner{
+  position:fixed; left:50%; bottom:26px; transform:translateX(-50%);
+  z-index:70; max-width:min(560px, 92vw); text-align:center;
+  padding:12px 22px; border-radius:11px;
+  font-size:.86rem; letter-spacing:.05em; color:var(--ink);
+  background:linear-gradient(160deg, rgba(20,44,58,.92), rgba(10,24,34,.88));
+  border:1px solid rgba(158,217,235,.3);
+  box-shadow:0 14px 40px rgba(0,0,0,.5);
+  opacity:0; pointer-events:none; transition:opacity .3s ease;
+}
+#boot-banner.show{ opacity:1; }
+#boot-banner.error{ border-color:rgba(255,93,93,.55); color:#ffd9d9; }
+
 /* ---------- shared glass chrome ---------- */
 .glass{
   background:var(--panel-bg);
@@ -230,7 +244,7 @@ body{
 #result-word.loss{ color:#8fb2c4; text-shadow:0 0 40px rgba(127,214,232,.25); }
 #result-word.draw{ color:var(--ice); }
 #result-reason{ margin-top:12px; color:var(--ink-dim); font-weight:300; font-size:.95rem; }
-#result-record{ margin:22px auto 26px; display:inline-flex; gap:10px; }
+#result-record{ margin:22px auto 26px; display:inline-flex; gap:10px; flex-wrap:wrap; justify-content:center; }
 #result-record .pill{ padding:7px 16px; border-radius:20px; font-size:.78rem; letter-spacing:.1em; border:1px solid rgba(158,217,235,.25); color:var(--ink-dim); }
 #result-record .pill b{ color:var(--ink); font-weight:600; }
 #over-actions{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
@@ -254,6 +268,9 @@ body{
 
 <!-- 3D scene canvas -->
 <canvas id="scene"></canvas>
+
+<!-- Boot status / error banner -->
+<div id="boot-banner"></div>
 
 <!-- ======================= HUD ======================= -->
 <div id="hud">
@@ -383,33 +400,170 @@ body{
 
 <!-- React mount point (kept hidden — the game is fully self-contained above) -->
 <div id="root"></div>
-<script type="module" src="/src/main.tsx"></script>
 
-<!-- ======================= LIBRARIES (CDN) ======================= -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/CopyShader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/EffectComposer.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/RenderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/ShaderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@18.6.4/dist/tween.umd.js"></script>
+<!-- Libraries (Three.js r147 + examples, chess.js, Tween.js) are loaded dynamically
+     by the bootstrap below, with multi-CDN fallbacks and global checks, so a single
+     broken CDN path can never leave the page dead. -->
+<script type="module" src="/src/main.tsx"></script>
 
 <script>
 /* ================================================================
    GLASS GAMBIT — a complete 3D chess game
    Sections:
+     0. Bootstrap: CDN loader, banner, static UI wiring
      1. Config & state          6. Interaction (raycaster)
      2. Three.js scene setup    7. Move animation & particles
      3. Environment & materials 8. Game flow (turns, check, end)
      4. Board construction      9. AI (minimax + alpha-beta + PST)
-     5. Piece geometry factory  10. UI bindings & persistence
+     5. Piece geometry factory  10. Game UI refresh + PGN
    ================================================================ */
 (function () {
 'use strict';
+
+/* ============ 0. BOOTSTRAP: LOADER, BANNER, STATIC UI ============ */
+const $ = (id) => document.getElementById(id);
+let engineReady = false;
+let engineFailed = false;
+const GG = {};   // engine entry-points, filled once initGame() succeeds
+
+/* ---- visible boot banner ---- */
+const bannerEl = $('boot-banner');
+let bannerTimer = null;
+function showBanner(msg, isError, autoHideMs) {
+  bannerEl.textContent = msg;
+  bannerEl.classList.toggle('error', !!isError);
+  bannerEl.classList.add('show');
+  clearTimeout(bannerTimer);
+  if (autoHideMs) bannerTimer = setTimeout(hideBanner, autoHideMs);
+}
+function hideBanner() { bannerEl.classList.remove('show'); }
+
+/* ---- script loader with per-attempt timeout ---- */
+function loadScript(url, timeoutMs) {
+  return new Promise((resolve) => {
+    const s = document.createElement('script');
+    let settled = false;
+    const done = (ok) => { if (!settled) { settled = true; clearTimeout(timer); resolve(ok); } };
+    const timer = setTimeout(() => { s.src = 'about:blank'; done(false); }, timeoutMs || 12000);
+    s.onload = () => done(true);
+    s.onerror = () => done(false);   // network failure / 404
+    s.src = url;
+    document.head.appendChild(s);   // note: a syntax error still fires onload → the global check below catches it
+  });
+}
+async function loadFirst(urls, check) {
+  if (check()) return true;
+  for (const url of urls) {
+    await loadScript(url);
+    if (check()) return true;
+  }
+  return false;
+}
+
+/* ---- library manifest: every lib has fallback CDNs + a global sanity check ---- */
+async function loadLibraries() {
+  const J = 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/';
+  const U = 'https://unpkg.com/three@0.147.0/examples/js/';
+  const has = (name) => () => (typeof THREE !== 'undefined') && !!THREE[name];
+  const steps = [
+    { name: 'Three.js core', urls: [
+        'https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js',
+        'https://unpkg.com/three@0.147.0/build/three.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.147.0/three.min.js'
+      ], check: () => (typeof THREE !== 'undefined') && !!THREE.WebGLRenderer },
+    { name: 'OrbitControls',  urls: [J + 'controls/OrbitControls.js',  U + 'controls/OrbitControls.js'],  check: has('OrbitControls') },
+    { name: 'RoomEnvironment',urls: [J + 'environments/RoomEnvironment.js', U + 'environments/RoomEnvironment.js'], check: has('RoomEnvironment') },
+    { name: 'CopyShader',     urls: [J + 'shaders/CopyShader.js',      U + 'shaders/CopyShader.js'],      check: has('CopyShader') },
+    { name: 'HighPassShader', urls: [J + 'shaders/LuminosityHighPassShader.js', U + 'shaders/LuminosityHighPassShader.js'], check: has('LuminosityHighPassShader') },
+    { name: 'EffectComposer', urls: [J + 'postprocessing/EffectComposer.js', U + 'postprocessing/EffectComposer.js'], check: has('EffectComposer') },
+    { name: 'RenderPass',     urls: [J + 'postprocessing/RenderPass.js', U + 'postprocessing/RenderPass.js'], check: has('RenderPass') },
+    { name: 'ShaderPass',     urls: [J + 'postprocessing/ShaderPass.js', U + 'postprocessing/ShaderPass.js'], check: has('ShaderPass') },
+    { name: 'UnrealBloomPass',urls: [J + 'postprocessing/UnrealBloomPass.js', U + 'postprocessing/UnrealBloomPass.js'], check: has('UnrealBloomPass') },
+    { name: 'chess.js', urls: [
+        'https://cdn.jsdelivr.net/npm/chess.js@0.13.4/chess.js',
+        'https://cdn.jsdelivr.net/npm/chess.js@0.13.4',            // resolves to the package "main" file
+        'https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js',
+        'https://unpkg.com/chess.js@0.13.4/chess.js'
+      ], check: () => (typeof Chess !== 'undefined') && (typeof Chess === 'function' || !!Chess.Chess) },
+    { name: 'Tween.js', urls: [
+        'https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@18.6.4/dist/tween.umd.js',
+        'https://unpkg.com/@tweenjs/tween.js@18.6.4/dist/tween.umd.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js'
+      ], check: () => (typeof TWEEN !== 'undefined') && !!TWEEN.Tween }
+  ];
+  for (const step of steps) {
+    showBanner('Loading ' + step.name + '…');
+    const ok = await loadFirst(step.urls, step.check);
+    if (!ok) return step.name;
+  }
+  return null;
+}
+
+/* ---- persistent statistics (available before the engine boots) ---- */
+const STATS_KEY = 'glassGambitStats.v1';
+function loadStats() {
+  try {
+    const raw = localStorage.getItem(STATS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { /* private mode — fall through */ }
+  return { easy: { w: 0, l: 0, d: 0 }, medium: { w: 0, l: 0, d: 0 }, hard: { w: 0, l: 0, d: 0 } };
+}
+function saveStats() { try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) {} }
+let stats = loadStats();
+function refreshMenuStats() {
+  ['easy', 'medium', 'hard'].forEach((k) => {
+    const el = $('rec-' + k);
+    if (el) el.innerHTML = '<b>' + stats[k].w + 'W</b> · ' + stats[k].l + 'L · ' + stats[k].d + 'D';
+  });
+}
+
+/* ---- static UI wiring: attached IMMEDIATELY so the menu always works ---- */
+let selectedLevel = null;
+function wireUI() {
+  document.querySelectorAll('.diff-row').forEach((row) => {
+    row.addEventListener('click', () => {
+      document.querySelectorAll('.diff-row').forEach((r) => r.classList.remove('selected'));
+      row.classList.add('selected');
+      selectedLevel = row.dataset.level;
+      $('btn-start').disabled = false;
+    });
+  });
+
+  const engineGuard = (fn) => () => {
+    if (engineReady) { fn(); return; }
+    showBanner(
+      engineFailed
+        ? 'The 3D engine could not load. Check your internet connection and reload the page.'
+        : 'Still loading the 3D engine — one moment…',
+      engineFailed, engineFailed ? 5000 : 1800
+    );
+  };
+
+  $('btn-start').addEventListener('click', engineGuard(() => {
+    if (!selectedLevel) return;
+    $('menu-overlay').classList.remove('open');
+    $('hud').classList.add('visible');
+    hideBanner();
+    GG.start(selectedLevel);
+  }));
+  $('btn-undo').addEventListener('click', engineGuard(() => GG.undo()));
+  $('btn-reset').addEventListener('click', engineGuard(() => GG.reset()));
+  $('btn-pgn').addEventListener('click', engineGuard(() => GG.pgn()));
+  $('btn-pgn2').addEventListener('click', engineGuard(() => GG.pgn()));
+  $('btn-menu').addEventListener('click', engineGuard(() => GG.toMenu()));
+  $('btn-menu2').addEventListener('click', engineGuard(() => GG.toMenu()));
+  $('btn-rematch').addEventListener('click', engineGuard(() => {
+    $('over-overlay').classList.remove('open');
+    GG.reset();
+  }));
+  $('btn-panel').addEventListener('click', () => $('sidepanel').classList.toggle('open'));
+  document.querySelectorAll('.promo-btn').forEach((btn) => {
+    btn.addEventListener('click', engineGuard(() => GG.promo(btn.dataset.piece)));
+  });
+}
+
+/* ================= 1–10. THE GAME ENGINE ================= */
+function initGame() {
 
 /* ---------------- 1. CONFIG & STATE ---------------- */
 const FILES = 'abcdefgh';
@@ -419,7 +573,6 @@ const LEVELS = {
   hard:   { name: 'Grandmaster',  depth: 3, jitter: 0,   blunder: 0.00 }
 };
 const PIECE_HEIGHT = { p: 0.92, r: 1.06, n: 1.16, b: 1.28, q: 1.55, k: 1.72 };
-const STATS_KEY = 'glassGambitStats.v1';
 
 const state = {
   mode: 'menu',           // 'menu' | 'playing'
@@ -439,22 +592,12 @@ const ChessCtor = (typeof Chess === 'function') ? Chess
   : (typeof Chess !== 'undefined' && typeof Chess.Chess === 'function') ? Chess.Chess : null;
 if (!ChessCtor) throw new Error('chess.js failed to load from CDN');
 const game = new ChessCtor();
-const $ = (id) => document.getElementById(id);
 
 function squareToXZ(sq) {
   const f = FILES.indexOf(sq[0]);
   const r = parseInt(sq[1], 10);
   return { x: f - 3.5, z: 4.5 - r };
 }
-function loadStats() {
-  try {
-    const raw = localStorage.getItem(STATS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) { /* private mode — fall through */ }
-  return { easy: { w: 0, l: 0, d: 0 }, medium: { w: 0, l: 0, d: 0 }, hard: { w: 0, l: 0, d: 0 } };
-}
-function saveStats() { try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) {} }
-let stats = loadStats();
 
 /* ---------------- 2. THREE.JS SCENE SETUP ---------------- */
 const canvas = $('scene');
@@ -770,6 +913,7 @@ function spawnPiece(type, color, square) {
   const p = squareToXZ(square);
   group.position.set(p.x, 0, p.z);
   const piece = { id: ++pieceIdSeq, type, color, square, group, material };
+  piece.group.userData.normScale = group.scale.x;
   group.traverse((o) => { if (o.isMesh) o.userData = { kind: 'piece', pieceId: piece.id }; });
   scene.add(group);
   piecesBySquare.set(square, piece);
@@ -853,7 +997,7 @@ canvas.addEventListener('pointerup', (e) => {
 function updateHover(e) {
   if (!canInteract()) { setHover(null); canvas.style.cursor = 'grab'; return; }
   const ud = raycast(e.clientX, e.clientY, pickables());
-  canvas.style.cursor = ud && ud.kind !== 'square' ? 'pointer' : (ud ? 'pointer' : 'grab');
+  canvas.style.cursor = ud ? 'pointer' : 'grab';
   if (ud && ud.kind === 'piece') {
     const p = piecesById.get(ud.pieceId);
     setHover(p && p.color === 'w' ? p : null);
@@ -1039,14 +1183,6 @@ function finishVisualMove(mv, piece, animToken, onDone) {
   onDone();
 }
 
-/* Store normalised scale on spawn so promotion pop restores it */
-const _origSpawn = spawnPiece;
-spawnPiece = function (type, color, square) {
-  const piece = _origSpawn(type, color, square);
-  piece.group.userData.normScale = piece.group.scale.x;
-  return piece;
-};
-
 /* ---------------- 8. GAME FLOW ---------------- */
 let checkKing = null;
 function updateCheckGlow() {
@@ -1155,6 +1291,7 @@ function endGame() {
     '<span class="pill"><b>' + s.w + '</b> W</span>' +
     '<span class="pill"><b>' + s.l + '</b> L</span>' +
     '<span class="pill"><b>' + s.d + '</b> D</span>';
+  refreshMenuStats();
   updateTurnUI();
   setTimeout(() => $('over-overlay').classList.add('open'), 650);
 }
@@ -1300,7 +1437,7 @@ function findBestMove(g, cfg) {
   return bestMove;
 }
 
-/* ---------------- 10. UI BINDINGS & PERSISTENCE ---------------- */
+/* ---------------- 10. GAME UI REFRESH + PGN ---------------- */
 function updateTurnUI() {
   const dot = $('turn-dot'), text = $('turn-text');
   if (state.mode !== 'playing') return;
@@ -1330,7 +1467,7 @@ function refreshHistoryUI() {
     const n = i / 2 + 1;
     const w = sans[i] || '';
     const b = sans[i + 1] || '';
-    const latest = (i + 2 >= sans.length - 0 && !b) || (i + 1 === sans.length - 1);
+    const latest = (i + 2 >= sans.length && !b) || (i + 1 === sans.length - 1);
     html += '<div class="move-row' + (latest ? ' latest' : '') + '"><span class="idx">' + n + '.</span><span class="san">' + w + '</span><span class="san">' + b + '</span></div>';
   }
   list.innerHTML = html;
@@ -1367,10 +1504,7 @@ function refreshStatsUI() {
   $('stat-w').textContent = s.w;
   $('stat-l').textContent = s.l;
   $('stat-d').textContent = s.d;
-  ['easy', 'medium', 'hard'].forEach((k) => {
-    const el = $('rec-' + k);
-    if (el) el.innerHTML = '<b>' + stats[k].w + 'W</b> · ' + stats[k].l + 'L · ' + stats[k].d + 'D';
-  });
+  refreshMenuStats();
 }
 
 function downloadPGN() {
@@ -1392,58 +1526,6 @@ function downloadPGN() {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1500);
 }
-
-/* ---- wiring ---- */
-let selectedLevel = null;
-document.querySelectorAll('.diff-row').forEach((row) => {
-  row.addEventListener('click', () => {
-    document.querySelectorAll('.diff-row').forEach((r) => r.classList.remove('selected'));
-    row.classList.add('selected');
-    selectedLevel = row.dataset.level;
-    $('btn-start').disabled = false;
-  });
-});
-$('btn-start').addEventListener('click', () => {
-  if (!selectedLevel) return;
-  $('menu-overlay').classList.remove('open');
-  $('hud').classList.add('visible');
-  resetGame(selectedLevel);
-  introCamera();
-});
-$('btn-undo').addEventListener('click', undoMove);
-$('btn-reset').addEventListener('click', () => { if (state.mode === 'playing') resetGame(); });
-$('btn-pgn').addEventListener('click', downloadPGN);
-$('btn-pgn2').addEventListener('click', downloadPGN);
-$('btn-menu').addEventListener('click', () => {
-  state.aiToken++;
-  state.mode = 'menu';
-  $('hud').classList.remove('visible');
-  $('over-overlay').classList.remove('open');
-  refreshStatsUI();
-  $('menu-overlay').classList.add('open');
-});
-$('btn-menu2').addEventListener('click', () => {
-  state.aiToken++;
-  state.mode = 'menu';
-  $('hud').classList.remove('visible');
-  $('over-overlay').classList.remove('open');
-  refreshStatsUI();
-  $('menu-overlay').classList.add('open');
-});
-$('btn-rematch').addEventListener('click', () => {
-  $('over-overlay').classList.remove('open');
-  resetGame();
-});
-$('btn-panel').addEventListener('click', () => $('sidepanel').classList.toggle('open'));
-document.querySelectorAll('.promo-btn').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const promo = btn.dataset.piece;
-    const pending = state.pendingPromo;
-    state.pendingPromo = null;
-    $('promo-overlay').classList.remove('open');
-    if (pending) executeMove({ from: pending.from, to: pending.to, promotion: promo });
-  });
-});
 
 function introCamera() {
   controls.enabled = false;
@@ -1494,10 +1576,53 @@ function animate() {
   composer.render();
 }
 
-/* ---------------- BOOT ---------------- */
-rebuildPiecesFromGame();   // board is set even behind the menu
-refreshStatsUI();
+/* ---------------- FINISH ENGINE BOOT ---------------- */
+rebuildPiecesFromGame();   // board is set the moment the engine is alive
 animate();
+
+/* expose game-flow entry points to the (already wired) UI */
+GG.start  = (lvl) => { resetGame(lvl); introCamera(); };
+GG.undo   = undoMove;
+GG.reset  = () => { if (state.mode === 'playing') resetGame(); };
+GG.pgn    = downloadPGN;
+GG.promo  = (pieceType) => {
+  const pending = state.pendingPromo;
+  state.pendingPromo = null;
+  $('promo-overlay').classList.remove('open');
+  if (pending) executeMove({ from: pending.from, to: pending.to, promotion: pieceType });
+};
+GG.toMenu = () => {
+  state.aiToken++;
+  state.mode = 'menu';
+  $('hud').classList.remove('visible');
+  $('over-overlay').classList.remove('open');
+  refreshMenuStats();
+  $('menu-overlay').classList.add('open');
+};
+engineReady = true;
+}
+/* ================= end initGame ================= */
+
+/* ================= BOOT SEQUENCE ================= */
+refreshMenuStats();
+wireUI();                                  // menu is interactive immediately
+(async function boot() {
+  showBanner('Loading 3D engine…');
+  const failedLib = await loadLibraries();
+  if (failedLib) {
+    engineFailed = true;
+    showBanner('Could not load ' + failedLib + ' from any CDN. Check your internet connection and reload the page.', true);
+    return;
+  }
+  try {
+    initGame();
+    hideBanner();
+  } catch (err) {
+    console.error('Glass Gambit boot error:', err);
+    engineFailed = true;
+    showBanner('The 3D engine failed to start (' + (err && err.message ? err.message : 'unknown error') + '). Try reloading.', true);
+  }
+})();
 })();
 </script>
 </body>
