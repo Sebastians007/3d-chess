@@ -687,16 +687,9 @@ function normalizeChessAPI(g) {
   g.isStalemate = () => g.in_stalemate();
   g.isThreefoldRepetition = () => g.in_threefold_repetition();
   g.isInsufficientMaterial = () => g.insufficient_material();
-  const origMoves = g.moves.bind(g);
-  g.moves = (opts) => {
-    if (!opts) return origMoves();
-    const o = {};
-    if (opts.square) o.square = opts.square;
-    if (opts.detailed) o.verbose = true;   // 0.13.x spells it `verbose`
-    return origMoves(o);
-  };
-  const origHistory = g.history.bind(g);
-  g.history = (opts) => origHistory(opts && opts.detailed ? { verbose: true } : undefined);
+  /* note: move lists are always requested with BOTH option spellings
+     ({ verbose: true, detailed: true }) so every chess.js major works —
+     unknown keys are ignored, the right one is always present. */
   return g;
 }
 const game = normalizeChessAPI(new ChessCtor());
@@ -714,7 +707,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.12;
+renderer.toneMappingExposure = 1.02;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -737,8 +730,8 @@ controls.maxPolarAngle = Math.PI / 2 - 0.12;   // never under the board
 controls.rotateSpeed = 0.75;
 
 /* Lights */
-scene.add(new THREE.HemisphereLight(0xbfe3f2, 0x15242e, 0.55));
-const keyLight = new THREE.DirectionalLight(0xfff1d6, 1.15);
+scene.add(new THREE.HemisphereLight(0xbfe3f2, 0x15242e, 0.5));
+const keyLight = new THREE.DirectionalLight(0xfff1d6, 1.0);
 keyLight.position.set(6, 11, 6);
 keyLight.castShadow = true;
 keyLight.shadow.mapSize.set(2048, 2048);
@@ -758,7 +751,7 @@ scene.add(orbitLight);
 const composer = new THREE.EffectComposer(renderer);
 composer.addPass(new THREE.RenderPass(scene, camera));
 const bloomPass = new THREE.UnrealBloomPass(
-  new THREE.Vector2(window.innerWidth, window.innerHeight), 0.5, 0.65, 0.78
+  new THREE.Vector2(window.innerWidth, window.innerHeight), 0.32, 0.7, 0.9
 );
 composer.addPass(bloomPass);
 
@@ -775,11 +768,11 @@ const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
 
 const matWhiteGlass = new THREE.MeshPhysicalMaterial({
-  color: 0xdfeef8, metalness: 0, roughness: 0.09,
-  transmission: 0.92, thickness: 0.55, ior: 1.5,
-  clearcoat: 0.65, clearcoatRoughness: 0.22,
+  color: 0xdfeef8, metalness: 0, roughness: 0.13,
+  transmission: 0.9, thickness: 0.55, ior: 1.5,
+  clearcoat: 0.6, clearcoatRoughness: 0.25,
   attenuationColor: new THREE.Color(0xcfeaff), attenuationDistance: 1.4,
-  envMapIntensity: 1.25, flatShading: true
+  envMapIntensity: 1.0, flatShading: true
 });
 const matBlackGlass = new THREE.MeshPhysicalMaterial({
   color: 0x2b3d49, metalness: 0, roughness: 0.13,
@@ -789,14 +782,14 @@ const matBlackGlass = new THREE.MeshPhysicalMaterial({
   envMapIntensity: 1.1, flatShading: true
 });
 const matSquareLight = new THREE.MeshPhysicalMaterial({
-  color: 0xc9dde9, roughness: 0.24, metalness: 0,
-  transmission: 0.32, thickness: 0.35, ior: 1.45,
-  clearcoat: 0.5, clearcoatRoughness: 0.3, envMapIntensity: 0.8
+  color: 0xa7c2d1, roughness: 0.42, metalness: 0,
+  transmission: 0.12, thickness: 0.3, ior: 1.45,
+  clearcoat: 0.15, clearcoatRoughness: 0.55, envMapIntensity: 0.45
 });
 const matSquareDark = new THREE.MeshPhysicalMaterial({
-  color: 0x1c394a, roughness: 0.2, metalness: 0,
-  transmission: 0.3, thickness: 0.4, ior: 1.5,
-  clearcoat: 0.55, clearcoatRoughness: 0.28, envMapIntensity: 0.8
+  color: 0x16303e, roughness: 0.36, metalness: 0,
+  transmission: 0.16, thickness: 0.4, ior: 1.5,
+  clearcoat: 0.2, clearcoatRoughness: 0.5, envMapIntensity: 0.5
 });
 const matPedestal = new THREE.MeshPhysicalMaterial({
   color: 0x0f2430, roughness: 0.32, metalness: 0.05,
@@ -1128,7 +1121,7 @@ function setHover(piece) {
 }
 
 function selectSquare(square) {
-  const moves = game.moves({ square, detailed: true });
+  const moves = game.moves({ square, verbose: true, detailed: true });
   if (!moves.length) { clearSelection(); return; }
   state.selected = square;
   state.legalTargets = new Map();
@@ -1318,7 +1311,7 @@ function updateLastMoveGlow(mv) {
 function clearLastMoveGlow() { lastMoveGlows.forEach((g) => (g.visible = false)); }
 function refreshLastMoveFromHistory() {
   clearLastMoveGlow();
-  const h = game.history({ detailed: true });
+  const h = game.history({ verbose: true, detailed: true });
   if (h.length) updateLastMoveGlow(h[h.length - 1]);
 }
 
@@ -1494,7 +1487,7 @@ function orderMoves(moves) {
 
 function negamax(g, depth, alpha, beta) {
   if (++aiNodes > NODE_CAP) throw ABORT;
-  const moves = g.moves({ detailed: true });
+  const moves = g.moves({ verbose: true, detailed: true });
   if (moves.length === 0) return g.isCheck() ? -(100000 + depth * 100) : 0;
   if (depth === 0) {
     const e = evaluate(g);
@@ -1513,7 +1506,7 @@ function negamax(g, depth, alpha, beta) {
 }
 
 function findBestMove(g, cfg) {
-  const legal = g.moves({ detailed: true });
+  const legal = g.moves({ verbose: true, detailed: true });
   if (!legal.length) return null;
   if (legal.length === 1) return legal[0];
   /* easy bots occasionally blunder on purpose */
@@ -1583,7 +1576,7 @@ function refreshHistoryUI() {
 }
 
 function refreshCapturedUI() {
-  const hist = game.history({ detailed: true });
+  const hist = game.history({ verbose: true, detailed: true });
   const lostByWhite = {}, lostByBlack = {};
   hist.forEach((m) => {
     if (!m.captured) return;
