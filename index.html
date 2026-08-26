@@ -460,6 +460,58 @@ async function loadFirst(urls, check) {
   return false;
 }
 
+/* ---- chess.js multi-format loader --------------------------------
+   chess.js ships differently per version: 0.13.x may expose a UMD
+   global, 1.x only ships CommonJS + ES-module builds. We try all
+   three formats across several CDNs until window.Chess is usable. */
+const CHESS_UMD_URLS = [
+  'https://cdn.jsdelivr.net/npm/chess.js@0.13.4/chess.js',
+  'https://cdn.jsdelivr.net/npm/chess.js@0.13.4/chess.min.js',
+  'https://unpkg.com/chess.js@0.13.4/chess.js'
+];
+const CHESS_CJS_URLS = [
+  'https://cdn.jsdelivr.net/npm/chess.js@1/dist/cjs/chess.js',
+  'https://cdn.jsdelivr.net/npm/chess.js/dist/cjs/chess.js',
+  'https://unpkg.com/chess.js@1/dist/cjs/chess.js'
+];
+const CHESS_ESM_URLS = [
+  'https://cdn.jsdelivr.net/npm/chess.js@1/dist/esm/chess.js',
+  'https://cdn.jsdelivr.net/npm/chess.js/dist/esm/chess.js',
+  'https://unpkg.com/chess.js@1/dist/esm/chess.js'
+];
+function chessUsable() {
+  const C = window.Chess;
+  return !!C && (typeof C === 'function' || typeof C.Chess === 'function');
+}
+async function loadChessJs() {
+  if (chessUsable()) return true;
+  /* 1) classic UMD builds → window.Chess */
+  for (const url of CHESS_UMD_URLS) {
+    await loadScript(url);
+    if (chessUsable()) return true;
+  }
+  /* 2) CommonJS builds → executed against a temporary exports shim */
+  for (const url of CHESS_CJS_URLS) {
+    window.__ggCjs = { exports: {} };
+    window.module = window.__ggCjs;
+    window.exports = window.__ggCjs.exports;
+    await loadScript(url);
+    const ex = (window.__ggCjs && window.__ggCjs.exports) || {};
+    delete window.module; delete window.exports; delete window.__ggCjs;
+    if (typeof ex.Chess === 'function') { window.Chess = ex; return true; }
+    if (typeof ex.default === 'function') { window.Chess = { Chess: ex.default }; return true; }
+  }
+  /* 3) native ES-module builds → dynamic import (also our last resort) */
+  for (const url of CHESS_ESM_URLS) {
+    try {
+      const mod = await import(/* @vite-ignore */ url);
+      if (mod && typeof mod.Chess === 'function') { window.Chess = mod; return true; }
+      if (mod && typeof mod.default === 'function') { window.Chess = { Chess: mod.default }; return true; }
+    } catch (e) { /* try the next mirror */ }
+  }
+  return false;
+}
+
 /* ---- library manifest: every lib has fallback CDNs + a global sanity check ---- */
 async function loadLibraries() {
   const J = 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/';
@@ -479,12 +531,7 @@ async function loadLibraries() {
     { name: 'RenderPass',     urls: [J + 'postprocessing/RenderPass.js', U + 'postprocessing/RenderPass.js'], check: has('RenderPass') },
     { name: 'ShaderPass',     urls: [J + 'postprocessing/ShaderPass.js', U + 'postprocessing/ShaderPass.js'], check: has('ShaderPass') },
     { name: 'UnrealBloomPass',urls: [J + 'postprocessing/UnrealBloomPass.js', U + 'postprocessing/UnrealBloomPass.js'], check: has('UnrealBloomPass') },
-    { name: 'chess.js', urls: [
-        'https://cdn.jsdelivr.net/npm/chess.js@0.13.4/chess.js',
-        'https://cdn.jsdelivr.net/npm/chess.js@0.13.4',            // resolves to the package "main" file
-        'https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js',
-        'https://unpkg.com/chess.js@0.13.4/chess.js'
-      ], check: () => (typeof Chess !== 'undefined') && (typeof Chess === 'function' || !!Chess.Chess) },
+    { name: 'chess.js', custom: loadChessJs, check: chessUsable },
     { name: 'Tween.js', urls: [
         'https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@18.6.4/dist/tween.umd.js',
         'https://unpkg.com/@tweenjs/tween.js@18.6.4/dist/tween.umd.js',
@@ -493,8 +540,8 @@ async function loadLibraries() {
   ];
   for (const step of steps) {
     showBanner('Loading ' + step.name + '…');
-    const ok = await loadFirst(step.urls, step.check);
-    if (!ok) return step.name;
+    const ok = step.custom ? await step.custom() : await loadFirst(step.urls, step.check);
+    if (!ok || !step.check()) return step.name;
   }
   return null;
 }
@@ -591,7 +638,31 @@ const state = {
 const ChessCtor = (typeof Chess === 'function') ? Chess
   : (typeof Chess !== 'undefined' && typeof Chess.Chess === 'function') ? Chess.Chess : null;
 if (!ChessCtor) throw new Error('chess.js failed to load from CDN');
-const game = new ChessCtor();
+
+/* API normaliser — the rest of the game is written against the chess.js 1.x API.
+   If an older 0.13.x build was the one that loaded, shim the new method names
+   and option keys onto the instance so behaviour is identical either way. */
+function normalizeChessAPI(g) {
+  if (typeof g.isCheck === 'function') return g;             // already 1.x
+  g.isCheck = () => g.in_check();
+  g.isCheckmate = () => g.in_checkmate();
+  g.isDraw = () => g.in_draw();
+  g.isStalemate = () => g.in_stalemate();
+  g.isThreefoldRepetition = () => g.in_threefold_repetition();
+  g.isInsufficientMaterial = () => g.insufficient_material();
+  const origMoves = g.moves.bind(g);
+  g.moves = (opts) => {
+    if (!opts) return origMoves();
+    const o = {};
+    if (opts.square) o.square = opts.square;
+    if (opts.detailed) o.verbose = true;   // 0.13.x spells it `verbose`
+    return origMoves(o);
+  };
+  const origHistory = g.history.bind(g);
+  g.history = (opts) => origHistory(opts && opts.detailed ? { verbose: true } : undefined);
+  return g;
+}
+const game = normalizeChessAPI(new ChessCtor());
 
 function squareToXZ(sq) {
   const f = FILES.indexOf(sq[0]);
@@ -1020,7 +1091,7 @@ function setHover(piece) {
 }
 
 function selectSquare(square) {
-  const moves = game.moves({ square, verbose: true });
+  const moves = game.moves({ square, detailed: true });
   if (!moves.length) { clearSelection(); return; }
   state.selected = square;
   state.legalTargets = new Map();
@@ -1189,7 +1260,7 @@ function updateCheckGlow() {
   /* reset previous */
   if (checkKing) { checkKing.material.emissiveIntensity = 0; checkKing = null; }
   checkDisc.visible = false;
-  const inCheck = game.in_check();
+  const inCheck = game.isCheck();
   $('check-badge').classList.toggle('on', inCheck && state.mode === 'playing');
   if (!inCheck) return;
   /* find the king of the side to move */
@@ -1210,7 +1281,7 @@ function updateLastMoveGlow(mv) {
 function clearLastMoveGlow() { lastMoveGlows.forEach((g) => (g.visible = false)); }
 function refreshLastMoveFromHistory() {
   clearLastMoveGlow();
-  const h = game.history({ verbose: true });
+  const h = game.history({ detailed: true });
   if (h.length) updateLastMoveGlow(h[h.length - 1]);
 }
 
@@ -1241,7 +1312,7 @@ function afterMove() {
   if (state.turn === 'b') scheduleAI();
 }
 function isGameOver() {
-  return game.in_checkmate() || game.in_draw();
+  return game.isCheckmate() || game.isDraw();
 }
 
 /* ---- AI turn ---- */
@@ -1264,7 +1335,7 @@ function endGame() {
   state.over = true;
   state.busy = false;
   $('check-badge').classList.remove('on');
-  const mated = game.in_checkmate();
+  const mated = game.isCheckmate();
   let result, reason;
   if (mated) {
     const winner = game.turn() === 'w' ? 'b' : 'w';
@@ -1272,9 +1343,9 @@ function endGame() {
     reason = winner === 'w' ? 'Checkmate — the black glass shatters.' : 'Checkmate — your king falls.';
   } else {
     result = 'draw';
-    reason = game.in_stalemate() ? 'Stalemate — no legal moves, no check.'
-      : game.in_threefold_repetition() ? 'Draw by threefold repetition.'
-      : game.insufficient_material() ? 'Draw — insufficient material.'
+    reason = game.isStalemate() ? 'Stalemate — no legal moves, no check.'
+      : game.isThreefoldRepetition() ? 'Draw by threefold repetition.'
+      : game.isInsufficientMaterial() ? 'Draw — insufficient material.'
       : 'Draw (fifty-move rule).';
   }
   state.result = result;
@@ -1386,8 +1457,8 @@ function orderMoves(moves) {
 
 function negamax(g, depth, alpha, beta) {
   if (++aiNodes > NODE_CAP) throw ABORT;
-  const moves = g.moves({ verbose: true });
-  if (moves.length === 0) return g.in_check() ? -(100000 + depth * 100) : 0;
+  const moves = g.moves({ detailed: true });
+  if (moves.length === 0) return g.isCheck() ? -(100000 + depth * 100) : 0;
   if (depth === 0) {
     const e = evaluate(g);
     return g.turn() === 'w' ? e : -e;
@@ -1405,7 +1476,7 @@ function negamax(g, depth, alpha, beta) {
 }
 
 function findBestMove(g, cfg) {
-  const legal = g.moves({ verbose: true });
+  const legal = g.moves({ detailed: true });
   if (!legal.length) return null;
   if (legal.length === 1) return legal[0];
   /* easy bots occasionally blunder on purpose */
@@ -1475,7 +1546,7 @@ function refreshHistoryUI() {
 }
 
 function refreshCapturedUI() {
-  const hist = game.history({ verbose: true });
+  const hist = game.history({ detailed: true });
   const lostByWhite = {}, lostByBlack = {};
   hist.forEach((m) => {
     if (!m.captured) return;
