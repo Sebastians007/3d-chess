@@ -512,25 +512,62 @@ async function loadChessJs() {
   return false;
 }
 
+/* ---- Three.js via native ES modules --------------------------------
+   The legacy examples/js folder is gone from the npm package, so the
+   engine + addons are loaded as ES modules (examples/jsm exists in
+   every release). Each source rewrites the addons' internal `three`
+   import to its own core URL, keeping one shared module instance.   */
+const THREE_SOURCES = [
+  { label: 'jsDelivr', core: 'https://cdn.jsdelivr.net/npm/three@0.147.0/+esm',
+    addon: (f) => 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/' + f + '/+esm' },
+  { label: 'esm.sh',   core: 'https://esm.sh/three@0.147.0',
+    addon: (f) => 'https://esm.sh/three@0.147.0/examples/jsm/' + f },
+  { label: 'unpkg',    core: 'https://unpkg.com/three@0.147.0?module',
+    addon: (f) => 'https://unpkg.com/three@0.147.0/examples/jsm/' + f + '?module' }
+];
+const THREE_ADDONS = {
+  OrbitControls: 'controls/OrbitControls.js',
+  RoomEnvironment: 'environments/RoomEnvironment.js',
+  EffectComposer: 'postprocessing/EffectComposer.js',
+  RenderPass: 'postprocessing/RenderPass.js',
+  ShaderPass: 'postprocessing/ShaderPass.js',
+  UnrealBloomPass: 'postprocessing/UnrealBloomPass.js'
+};
+function importWithTimeout(url, ms) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout: ' + url)), ms || 25000);
+    import(/* @vite-ignore */ url).then(
+      (mod) => { clearTimeout(timer); resolve(mod); },
+      (err) => { clearTimeout(timer); reject(err); }
+    );
+  });
+}
+async function loadThreeEcosystem() {
+  if (window.THREE && window.THREE.WebGLRenderer && window.THREE.OrbitControls) return true;
+  for (const src of THREE_SOURCES) {
+    try {
+      showBanner('Loading Three.js (' + src.label + ')…');
+      const ns = await importWithTimeout(src.core, 25000);
+      if (!ns || !ns.WebGLRenderer || !ns.PMREMGenerator) throw new Error('bad three bundle');
+      const merged = Object.assign({}, ns);   // mutable copy — namespace objects are frozen
+      for (const name of Object.keys(THREE_ADDONS)) {
+        const mod = await importWithTimeout(src.addon(THREE_ADDONS[name]), 20000);
+        merged[name] = mod && mod[name];
+        if (!merged[name]) throw new Error(name + ' missing from bundle');
+      }
+      window.THREE = merged;
+      return true;
+    } catch (e) { /* fall through to the next source */ }
+  }
+  return false;
+}
+
 /* ---- library manifest: every lib has fallback CDNs + a global sanity check ---- */
 async function loadLibraries() {
-  const J = 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/';
-  const U = 'https://unpkg.com/three@0.147.0/examples/js/';
-  const has = (name) => () => (typeof THREE !== 'undefined') && !!THREE[name];
   const steps = [
-    { name: 'Three.js core', urls: [
-        'https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js',
-        'https://unpkg.com/three@0.147.0/build/three.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.147.0/three.min.js'
-      ], check: () => (typeof THREE !== 'undefined') && !!THREE.WebGLRenderer },
-    { name: 'OrbitControls',  urls: [J + 'controls/OrbitControls.js',  U + 'controls/OrbitControls.js'],  check: has('OrbitControls') },
-    { name: 'RoomEnvironment',urls: [J + 'environments/RoomEnvironment.js', U + 'environments/RoomEnvironment.js'], check: has('RoomEnvironment') },
-    { name: 'CopyShader',     urls: [J + 'shaders/CopyShader.js',      U + 'shaders/CopyShader.js'],      check: has('CopyShader') },
-    { name: 'HighPassShader', urls: [J + 'shaders/LuminosityHighPassShader.js', U + 'shaders/LuminosityHighPassShader.js'], check: has('LuminosityHighPassShader') },
-    { name: 'EffectComposer', urls: [J + 'postprocessing/EffectComposer.js', U + 'postprocessing/EffectComposer.js'], check: has('EffectComposer') },
-    { name: 'RenderPass',     urls: [J + 'postprocessing/RenderPass.js', U + 'postprocessing/RenderPass.js'], check: has('RenderPass') },
-    { name: 'ShaderPass',     urls: [J + 'postprocessing/ShaderPass.js', U + 'postprocessing/ShaderPass.js'], check: has('ShaderPass') },
-    { name: 'UnrealBloomPass',urls: [J + 'postprocessing/UnrealBloomPass.js', U + 'postprocessing/UnrealBloomPass.js'], check: has('UnrealBloomPass') },
+    { name: 'Three.js + addons', custom: loadThreeEcosystem,
+      check: () => !!window.THREE && !!window.THREE.WebGLRenderer && !!window.THREE.OrbitControls
+        && !!window.THREE.EffectComposer && !!window.THREE.UnrealBloomPass && !!window.THREE.RoomEnvironment },
     { name: 'chess.js', custom: loadChessJs, check: chessUsable },
     { name: 'Tween.js', urls: [
         'https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@18.6.4/dist/tween.umd.js',
