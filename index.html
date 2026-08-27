@@ -15,25 +15,25 @@
    GLASS GAMBIT — UI STYLES
    Deep petrol palette · amber gold + glacial ice accents
    ============================================================ */
-/* ---------- DARK theme: true near-black graphite (default) ---------- */
+/* ---------- DARK theme: true black + electric blue (default) ---------- */
 :root{
-  --bg-0:#07080b;
-  --bg-1:#11141b;
-  --ink:#eef2f6;
-  --ink-dim:#a6b2c0;
-  --ink-faint:#66717f;
-  --gold:#e8b04b;
-  --gold-hi:#f5d28a;
-  --ice:#7fd6e8;
-  --ice-hi:#c9f0fa;
-  --danger:#ff5d5d;
-  --panel-bg:linear-gradient(160deg, rgba(24,29,38,.78), rgba(12,14,19,.72));
+  --bg-0:#010204;
+  --bg-1:#06080d;
+  --ink:#f4f8fb;
+  --ink-dim:#a9b6c4;
+  --ink-faint:#5d6b7a;
+  --gold:#1fc9ff;
+  --gold-hi:#8feaff;
+  --ice:#2fd0ff;
+  --ice-hi:#c4f1ff;
+  --danger:#ff4d5e;
+  --panel-bg:linear-gradient(160deg, rgba(17,21,30,.85), rgba(8,10,16,.8));
   --panel-border:rgba(150,180,210,.14);
-  --btn-bg:linear-gradient(160deg, rgba(34,41,54,.8), rgba(18,22,30,.72));
+  --btn-bg:linear-gradient(160deg, rgba(28,34,46,.85), rgba(14,17,25,.78));
   --btn-border:rgba(150,180,210,.2);
-  --scrim:rgba(4,5,8,.66);
-  --menu-scrim:rgba(5,6,9,.78);
-  --shadow:0 18px 50px rgba(0,0,0,.55);
+  --scrim:rgba(2,3,6,.72);
+  --menu-scrim:rgba(3,4,8,.84);
+  --shadow:0 18px 50px rgba(0,0,0,.65);
   --panel-radius:14px;
   --font-display:"Cinzel", serif;
   --font-body:"Jost", sans-serif;
@@ -41,31 +41,31 @@
 }
 /* ---------- LIGHT theme: porcelain glass in daylight ---------- */
 [data-theme="light"]{
-  --bg-0:#dce6ec;
-  --bg-1:#f2f7fa;
-  --ink:#12242e;
-  --ink-dim:#41596a;
-  --ink-faint:#7d95a3;
-  --gold:#9a6514;
-  --gold-hi:#7a4e0c;
-  --ice:#0f7d99;
-  --ice-hi:#0a5d73;
-  --danger:#c22f2f;
-  --panel-bg:linear-gradient(160deg, rgba(255,255,255,.85), rgba(231,241,246,.72));
-  --panel-border:rgba(18,44,58,.18);
-  --btn-bg:linear-gradient(160deg, rgba(255,255,255,.9), rgba(228,239,245,.78));
-  --btn-border:rgba(18,44,58,.22);
-  --scrim:rgba(214,226,233,.55);
-  --menu-scrim:rgba(226,236,242,.72);
-  --shadow:0 18px 44px rgba(24,52,70,.22);
+  --bg-0:#b7cad6;
+  --bg-1:#dbe7ee;
+  --ink:#08131c;
+  --ink-dim:#2c4356;
+  --ink-faint:#567184;
+  --gold:#0086cf;
+  --gold-hi:#005f9e;
+  --ice:#0b84b5;
+  --ice-hi:#066a94;
+  --danger:#d22f3f;
+  --panel-bg:linear-gradient(160deg, rgba(238,247,252,.86), rgba(208,226,237,.78));
+  --panel-border:rgba(18,44,58,.24);
+  --btn-bg:linear-gradient(160deg, rgba(240,248,252,.9), rgba(214,231,241,.8));
+  --btn-border:rgba(18,44,58,.28);
+  --scrim:rgba(164,190,206,.62);
+  --menu-scrim:rgba(184,205,219,.82);
+  --shadow:0 18px 44px rgba(24,52,70,.3);
   --scene-glow:rgba(15,125,153,.18);
 }
 *{ box-sizing:border-box; margin:0; padding:0; }
 html,body{ height:100%; }
 body{
   background:
-    radial-gradient(1200px 800px at 78% -10%, color-mix(in srgb, var(--ice) 22%, transparent), transparent 60%),
-    radial-gradient(1000px 700px at 12% 110%, color-mix(in srgb, var(--gold) 16%, transparent), transparent 55%),
+    radial-gradient(1200px 800px at 78% -10%, color-mix(in srgb, var(--ice) 10%, transparent), transparent 60%),
+    radial-gradient(1000px 700px at 12% 110%, color-mix(in srgb, var(--gold) 8%, transparent), transparent 55%),
     linear-gradient(175deg, var(--bg-1), var(--bg-0) 70%);
   color:var(--ink);
   font-family:var(--font-body);
@@ -87,7 +87,16 @@ body{
   border:1px solid var(--panel-border);
   box-shadow:var(--shadow);
   opacity:0; pointer-events:none; transition:opacity .3s ease;
+  display:flex; align-items:center; justify-content:center; gap:14px;
 }
+#banner-retry{
+  display:none; font-family:var(--font-body); font-weight:600; font-size:.78rem;
+  letter-spacing:.1em; text-transform:uppercase; color:#00131f; cursor:pointer;
+  padding:6px 16px; border-radius:8px; border:1px solid rgba(160,235,255,.7);
+  background:linear-gradient(160deg, #43e0ff, #0087d6);
+}
+#banner-retry:hover{ box-shadow:0 0 18px rgba(60,210,255,.5); }
+#boot-banner.with-retry #banner-retry{ display:inline-block; }
 #boot-banner.show{ opacity:1; }
 #boot-banner.error{ border-color:rgba(255,93,93,.55); color:#ffd9d9; }
 
@@ -116,10 +125,10 @@ body{
 .btn:disabled{ opacity:.38; pointer-events:none; }
 .btn svg{ width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .btn.primary{
-  background:linear-gradient(160deg, #f2c56d, #d99a2e);
-  border-color:rgba(255,225,160,.65); color:#251703; font-weight:600;
+  background:linear-gradient(160deg, #43e0ff, #0087d6);
+  border-color:rgba(160,235,255,.7); color:#00131f; font-weight:600;
 }
-.btn.primary:hover{ color:#1d1200; box-shadow:0 10px 30px rgba(217,154,46,.35); }
+.btn.primary:hover{ color:#000d15; box-shadow:0 10px 30px rgba(0,150,255,.4), 0 0 22px rgba(60,210,255,.35); }
 
 /* ---------- HUD ---------- */
 #hud{ position:fixed; inset:0; pointer-events:none; z-index:20; opacity:0; transition:opacity .5s ease; }
@@ -232,7 +241,7 @@ body{
   border:1px solid rgba(158,217,235,.14);
   transition:transform .16s ease, border-color .16s ease, box-shadow .16s ease;
 }
-[data-theme="light"] .rank-chip{ background:linear-gradient(160deg, rgba(255,255,255,.6), rgba(226,238,244,.5)); }
+[data-theme="light"] .rank-chip{ background:linear-gradient(160deg, rgba(224,238,247,.66), rgba(198,219,232,.55)); }
 .rank-chip:hover{ transform:translateY(-2px); border-color:color-mix(in srgb, var(--ice) 55%, transparent); }
 .rank-chip.selected{ border-color:color-mix(in srgb, var(--gold) 70%, transparent);
   box-shadow:0 0 0 1px color-mix(in srgb, var(--gold) 30%, transparent), 0 8px 22px rgba(0,0,0,.3); }
@@ -266,11 +275,11 @@ body{
   border:1px solid rgba(158,217,235,.14);
   transition:transform .16s ease, border-color .16s ease, box-shadow .16s ease;
 }
-[data-theme="light"] .seg-chip{ background:linear-gradient(160deg, rgba(255,255,255,.6), rgba(226,238,244,.5)); }
+[data-theme="light"] .seg-chip{ background:linear-gradient(160deg, rgba(224,238,247,.66), rgba(198,219,232,.55)); }
 [data-theme="light"] .rank-chip,
 [data-theme="light"] .seg-chip,
-[data-theme="light"] .promo-btn{ border-color:rgba(18,44,58,.18); }
-[data-theme="light"] .promo-btn{ background:linear-gradient(165deg, rgba(255,255,255,.7), rgba(226,238,244,.6)); }
+[data-theme="light"] .promo-btn{ border-color:rgba(18,44,58,.26); }
+[data-theme="light"] .promo-btn{ background:linear-gradient(165deg, rgba(226,240,248,.72), rgba(200,220,233,.6)); }
 .seg-chip:hover{ transform:translateY(-2px); border-color:color-mix(in srgb, var(--ice) 55%, transparent); }
 .seg-chip.selected{ border-color:color-mix(in srgb, var(--gold) 70%, transparent); color:var(--gold-hi);
   box-shadow:0 0 0 1px color-mix(in srgb, var(--gold) 30%, transparent), 0 8px 22px rgba(0,0,0,.3); }
@@ -325,6 +334,19 @@ body{
   #promo-choices{ grid-template-columns:repeat(2, 1fr); }
   #footnote #hint{ display:none; }
 }
+
+/* ---------- check vignette (red pulse at screen edges) ---------- */
+#check-vignette{
+  position:fixed; inset:0; z-index:15; pointer-events:none; opacity:0;
+  background:radial-gradient(ellipse at center, transparent 50%, rgba(255,45,70,.30) 100%);
+  transition:opacity .35s ease;
+}
+#check-vignette.on{ animation:vignPulse 1.2s ease-in-out infinite; }
+@keyframes vignPulse{ 0%,100%{ opacity:.5; } 50%{ opacity:1; } }
+
+/* ---------- realm picker (environment themes) ---------- */
+#env-row .seg-chip small{ color:var(--ink-faint); }
+.seg-chip .realm-ico{ font-size:1.15rem; line-height:1; }
 </style>
 </head>
 <body>
@@ -332,8 +354,11 @@ body{
 <!-- 3D scene canvas -->
 <canvas id="scene"></canvas>
 
+<!-- red pulse at screen edges while your king is in check -->
+<div id="check-vignette"></div>
+
 <!-- Boot status / error banner -->
-<div id="boot-banner"></div>
+<div id="boot-banner"><span id="banner-msg"></span><button id="banner-retry">Retry</button></div>
 
 <!-- ======================= HUD ======================= -->
 <div id="hud">
@@ -357,10 +382,10 @@ body{
         <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
         <span class="btn-label">Save Game (.pgn)</span>
       </button>
-      <button class="btn" id="btn-theme" title="Toggle light / dark theme">
-        <svg viewBox="0 0 24 24" id="theme-icon-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-        <svg viewBox="0 0 24 24" id="theme-icon-moon" style="display:none"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
-        <span class="btn-label">Theme</span>
+      <button class="btn" id="btn-sound" title="Toggle sound effects">
+        <svg viewBox="0 0 24 24" id="snd-on"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9.5 9.5 0 0 1 0 13"/></svg>
+        <svg viewBox="0 0 24 24" id="snd-off" style="display:none"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="m16 9 6 6"/><path d="m22 9-6 6"/></svg>
+        <span class="btn-label">Sound</span>
       </button>
       <button class="btn" id="btn-panel" title="Toggle panel">
         <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
@@ -402,6 +427,15 @@ body{
     <div class="section-label">Choose Your Opponent · Ten Ranks</div>
     <div id="rank-grid"></div>
     <div id="rank-detail"><span><b id="rd-name">—</b> &nbsp;<span id="rd-desc"></span></span><span class="spec" id="rd-spec"></span></div>
+
+    <div class="section-label">Choose Your Realm</div>
+    <div class="seg-row" id="env-row">
+      <button class="seg-chip" data-env="midnight"><span class="realm-ico">☾</span><span>Midnight<small>stars &amp; moonlight</small></span></button>
+      <button class="seg-chip" data-env="daybreak"><span class="realm-ico">☀</span><span>Daybreak<small>morning sun</small></span></button>
+      <button class="seg-chip" data-env="meadow"><span class="realm-ico">❦</span><span>Meadow<small>living grass</small></span></button>
+      <button class="seg-chip" data-env="lagoon"><span class="realm-ico">≈</span><span>Lagoon<small>rippling water</small></span></button>
+      <button class="seg-chip" data-env="aurora"><span class="realm-ico">∿</span><span>Aurora<small>northern lights</small></span></button>
+    </div>
 
     <div class="section-label">Play As</div>
     <div class="seg-row" id="color-row">
@@ -501,17 +535,57 @@ let engineReady = false;
 let engineFailed = false;
 const GG = {};   // engine entry-points, filled once initGame() succeeds
 
+/* ---- tiny WebAudio synth for game feel (no audio files needed) ---- */
+const sfx = (() => {
+  let ctx = null, muted = false;
+  try { muted = localStorage.getItem('glassGambitMuted') === '1'; } catch (e) {}
+  function ensure() {
+    if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (ctx && ctx.state === 'suspended') ctx.resume();
+  }
+  function tone(f0, f1, dur, type, vol, delay) {
+    if (!ctx || muted) return;
+    const t = ctx.currentTime + (delay || 0);
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(f0, t);
+    if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol || 0.12, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  return {
+    unlock: ensure,
+    get muted() { return muted; },
+    toggle() { muted = !muted; try { localStorage.setItem('glassGambitMuted', muted ? '1' : '0'); } catch (e) {} return muted; },
+    play(k) {
+      ensure();
+      if (!ctx || muted) return;
+      if (k === 'select') tone(620, 520, 0.06, 'sine', 0.05);
+      else if (k === 'move') tone(300, 170, 0.09, 'sine', 0.1);
+      else if (k === 'capture') { tone(520, 180, 0.16, 'triangle', 0.12); tone(880, 1400, 0.22, 'sine', 0.06, 0.02); }
+      else if (k === 'check') { tone(150, 110, 0.12, 'square', 0.06); tone(150, 110, 0.12, 'square', 0.06, 0.16); }
+      else if (k === 'win') [523, 659, 784, 1046].forEach((f, i) => tone(f, f, 0.28, 'sine', 0.09, i * 0.11));
+      else if (k === 'loss') [392, 311, 262, 196].forEach((f, i) => tone(f, f * 0.98, 0.3, 'sine', 0.08, i * 0.13));
+      else if (k === 'draw') { tone(440, 440, 0.25, 'sine', 0.07); tone(440, 440, 0.25, 'sine', 0.07, 0.2); }
+    }
+  };
+})();
+
 /* ---- visible boot banner ---- */
 const bannerEl = $('boot-banner');
 let bannerTimer = null;
-function showBanner(msg, isError, autoHideMs) {
-  bannerEl.textContent = msg;
+function showBanner(msg, isError, autoHideMs, withRetry) {
+  $('banner-msg').textContent = msg;
   bannerEl.classList.toggle('error', !!isError);
+  bannerEl.classList.toggle('with-retry', !!withRetry);
   bannerEl.classList.add('show');
   clearTimeout(bannerTimer);
   if (autoHideMs) bannerTimer = setTimeout(hideBanner, autoHideMs);
 }
-function hideBanner() { bannerEl.classList.remove('show'); }
+function hideBanner() { bannerEl.classList.remove('show'); bannerEl.classList.remove('with-retry'); }
 
 /* ---- script loader with per-attempt timeout ---- */
 function loadScript(url, timeoutMs) {
@@ -567,12 +641,15 @@ async function loadChessJs() {
   }
   /* 2) CommonJS builds → executed against a temporary exports shim */
   for (const url of CHESS_CJS_URLS) {
+    const prevModule = window.module, prevExports = window.exports;
     window.__ggCjs = { exports: {} };
     window.module = window.__ggCjs;
     window.exports = window.__ggCjs.exports;
     await loadScript(url);
     const ex = (window.__ggCjs && window.__ggCjs.exports) || {};
-    delete window.module; delete window.exports; delete window.__ggCjs;
+    if (prevModule === undefined) delete window.module; else window.module = prevModule;
+    if (prevExports === undefined) delete window.exports; else window.exports = prevExports;
+    delete window.__ggCjs;
     if (typeof ex.Chess === 'function') { window.Chess = ex; return true; }
     if (typeof ex.default === 'function') { window.Chess = { Chess: ex.default }; return true; }
   }
@@ -592,6 +669,41 @@ async function loadChessJs() {
    engine + addons are loaded as ES modules (examples/jsm exists in
    every release). Each source rewrites the addons' internal `three`
    import to its own core URL, keeping one shared module instance.   */
+function threeReady() {
+  return !!(window.THREE && window.THREE.WebGLRenderer && window.THREE.OrbitControls &&
+    window.THREE.EffectComposer && window.THREE.RenderPass && window.THREE.UnrealBloomPass);
+}
+/* ---- Source A: classic <script> tags (no dynamic import at all) ----
+   three r147 is the last release that ships examples/js, so core + every addon
+   can be loaded as plain globals. This works even where import() is blocked. */
+const THREE_R147_FILES = [
+  'build/three.min.js',
+  'examples/js/shaders/CopyShader.js',
+  'examples/js/shaders/LuminosityHighPassShader.js',
+  'examples/js/postprocessing/EffectComposer.js',
+  'examples/js/postprocessing/RenderPass.js',
+  'examples/js/postprocessing/ShaderPass.js',
+  'examples/js/postprocessing/UnrealBloomPass.js',
+  'examples/js/controls/OrbitControls.js'
+];
+const THREE_GLOBAL_BASES = [
+  'https://cdn.jsdelivr.net/npm/three@0.147.0/',
+  'https://unpkg.com/three@0.147.0/'
+];
+async function loadThreeGlobals() {
+  if (window.THREE && window.THREE.WebGLRenderer && threeReady()) return true;
+  for (const base of THREE_GLOBAL_BASES) {
+    let ok = true;
+    for (let i = 0; i < THREE_R147_FILES.length; i++) {
+      const isCore = (i === 0);
+      /* generous timeout for the ~640 KB core, tighter for addons */
+      if (!(await loadScript(base + THREE_R147_FILES[i], isCore ? 30000 : 12000))) { ok = false; break; }
+    }
+    if (ok && threeReady()) return true;
+  }
+  return false;
+}
+/* ---- Source B: native ES modules (fallback) ---- */
 const THREE_SOURCES = [
   { label: 'jsDelivr', core: 'https://cdn.jsdelivr.net/npm/three@0.147.0/+esm',
     addon: (f) => 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/' + f + '/+esm' },
@@ -602,7 +714,6 @@ const THREE_SOURCES = [
 ];
 const THREE_ADDONS = {
   OrbitControls: 'controls/OrbitControls.js',
-  RoomEnvironment: 'environments/RoomEnvironment.js',
   EffectComposer: 'postprocessing/EffectComposer.js',
   RenderPass: 'postprocessing/RenderPass.js',
   ShaderPass: 'postprocessing/ShaderPass.js',
@@ -618,7 +729,9 @@ function importWithTimeout(url, ms) {
   });
 }
 async function loadThreeEcosystem() {
-  if (window.THREE && window.THREE.WebGLRenderer && window.THREE.OrbitControls) return true;
+  if (threeReady()) return true;
+  showBanner('Loading Three.js (script tags)…');
+  if (await loadThreeGlobals()) return true;   // classic scripts — most compatible
   for (const src of THREE_SOURCES) {
     try {
       showBanner('Loading Three.js (' + src.label + ')…');
@@ -634,15 +747,18 @@ async function loadThreeEcosystem() {
       return true;
     } catch (e) { /* fall through to the next source */ }
   }
-  return false;
+  /* addons failed everywhere — proceed degraded (no bloom / fallback orbit)
+     rather than refusing to boot, as long as the core renderer is usable */
+  return !!(window.THREE && window.THREE.WebGLRenderer);
 }
 
 /* ---- library manifest: every lib has fallback CDNs + a global sanity check ---- */
 async function loadLibraries() {
   const steps = [
-    { name: 'Three.js + addons', custom: loadThreeEcosystem,
-      check: () => !!window.THREE && !!window.THREE.WebGLRenderer && !!window.THREE.OrbitControls
-        && !!window.THREE.EffectComposer && !!window.THREE.UnrealBloomPass && !!window.THREE.RoomEnvironment },
+    /* the CORE renderer is the only hard requirement — if addons (bloom,
+       orbit controls) can't load, initGame degrades gracefully instead of dying */
+    { name: 'Three.js', custom: loadThreeEcosystem,
+      check: () => !!(window.THREE && window.THREE.WebGLRenderer) },
     { name: 'chess.js', custom: loadChessJs, check: chessUsable },
     { name: 'Tween.js', urls: [
         'https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@18.6.4/dist/tween.umd.js',
@@ -662,7 +778,6 @@ async function loadLibraries() {
 const RANK_IDS = ['r1','r2','r3','r4','r5','r6','r7','r8','r9','r10'];
 const STATS_KEY = 'glassGambitStats.v2';
 const OPTS_KEY  = 'glassGambitOpts.v1';
-const THEME_KEY = 'glassGambitTheme';
 function blankStats() {
   const s = {};
   RANK_IDS.forEach((id) => { s[id] = { w: 0, l: 0, d: 0 }; });
@@ -736,29 +851,38 @@ function refreshMenuStats() {
   }
 }
 
-/* ---- theme: dark petrol (default) / light porcelain ---- */
-const SCENE_THEMES = {
-  dark:  { bg: 0x0a0c10, ground: 0x10131a, hemi: 0.5,  key: 1.0,  exposure: 1.02, bloom: 0.32 },
-  light: { bg: 0xdfe9ee, ground: 0xc2d1d9, hemi: 0.85, key: 1.25, exposure: 1.08, bloom: 0.16 }
+/* ---- realms: each one re-lights the 3D scene AND re-themes the UI ---- */
+const ENVS = {
+  midnight: { ui: 'dark',  name: 'Midnight', bg: 0x02040a, ground: 0x02040a, groundType: 'plain',
+              hemi: 0.16, key: 0.55, keyColor: 0x9db8ff, exposure: 0.82, bloom: 0.6,  envRef: 0.36, fog: 0.02,
+              stars: 1.0, moon: true,  motes: 'none', water: false, grass: false, aurora: false },
+  daybreak: { ui: 'light', name: 'Daybreak', bg: 0x7fb2d8, ground: 0x6f90a2, groundType: 'plain',
+              hemi: 1.0,  key: 1.3,  keyColor: 0xfff0cf, exposure: 1.02, bloom: 0.04, envRef: 0.8, fog: 0.016,
+              stars: 0,   moon: false, motes: 'pollen', water: false, grass: false, aurora: false },
+  meadow:   { ui: 'light', name: 'Meadow',   bg: 0xbcd8c6, ground: 0x2a5f36, groundType: 'grass',
+              hemi: 0.9,  key: 1.25, keyColor: 0xfff0cf, exposure: 1.02, bloom: 0.12, envRef: 0.7,  fog: 0.014,
+              stars: 0,   moon: false, motes: 'pollen', water: false, grass: true,  aurora: false },
+  lagoon:   { ui: 'dark',  name: 'Lagoon',   bg: 0x02121a, ground: 0x0a3038, groundType: 'water',
+              hemi: 0.3,  key: 0.85, keyColor: 0xbfe8ff, exposure: 0.9,  bloom: 0.5,  envRef: 0.5,  fog: 0.018,
+              stars: 0.5, moon: false, motes: 'none', water: true,  grass: false, aurora: false },
+  aurora:   { ui: 'dark',  name: 'Aurora',   bg: 0x020610, ground: 0x0c1e2a, groundType: 'plain',
+              hemi: 0.22, key: 0.6,  keyColor: 0xbffff0, exposure: 0.85, bloom: 0.65, envRef: 0.42, fog: 0.016,
+              stars: 1.2, moon: false, motes: 'none', water: false, grass: false, aurora: true }
 };
-let theme = 'dark';
-function applyTheme(name, persist) {
-  theme = (name === 'light') ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', theme);
-  const sun = $('theme-icon-sun'), moon = $('theme-icon-moon');
-  if (sun && moon) {
-    sun.style.display = theme === 'dark' ? '' : 'none';
-    moon.style.display = theme === 'light' ? '' : 'none';
-  }
-  if (GG && GG.setTheme) GG.setTheme(theme);   // restyles the 3D scene once the engine is up
-  if (persist !== false) { try { localStorage.setItem(THEME_KEY, theme); } catch (e) {} }
+const ENV_KEY = 'glassGambitEnv';
+let envName = 'midnight';
+function applyEnv(name, persist) {
+  envName = ENVS[name] ? name : 'midnight';
+  document.documentElement.setAttribute('data-theme', ENVS[envName].ui);   // UI follows the realm
+  if (GG && GG.setEnv) GG.setEnv(envName);                                 // rebuild the 3D world
+  if (persist !== false) { try { localStorage.setItem(ENV_KEY, envName); } catch (e) {} }
 }
-function loadTheme() {
+function loadEnv() {
   try {
-    const t = localStorage.getItem(THEME_KEY);
-    if (t === 'light' || t === 'dark') return t;
-  } catch (e) {}
-  return 'dark';
+    const e = localStorage.getItem(ENV_KEY);
+    if (ENVS[e]) return e;
+  } catch (err) {}
+  return 'midnight';
 }
 
 /* ---- static UI wiring: attached IMMEDIATELY so the menu always works ---- */
@@ -798,13 +922,29 @@ function wireUI() {
   wireSeg('color-row', 'color', 'color');
   wireSeg('tempo-row', 'tempo', 'tempo');
 
+  /* realm picker — rebuilds the whole 3D world live */
+  $('env-row').addEventListener('click', (e) => {
+    const chip = e.target.closest('.seg-chip');
+    if (!chip) return;
+    document.querySelectorAll('#env-row .seg-chip').forEach((c) => c.classList.toggle('selected', c === chip));
+    applyEnv(chip.dataset.env);   // persists + applies immediately
+  });
+
+  /* sound toggle */
+  function paintSoundBtn() {
+    const off = sfx.muted;
+    $('snd-on').style.display = off ? 'none' : '';
+    $('snd-off').style.display = off ? '' : 'none';
+  }
+  $('btn-sound').addEventListener('click', () => { sfx.toggle(); paintSoundBtn(); });
+  paintSoundBtn();
+
   /* restore last session's choices */
   loadOpts();
   selectRank(opts.rank);
   document.querySelectorAll('#color-row .seg-chip').forEach((c) => c.classList.toggle('selected', c.dataset.color === opts.color));
   document.querySelectorAll('#tempo-row .seg-chip').forEach((c) => c.classList.toggle('selected', c.dataset.tempo === opts.tempo));
-
-  $('btn-theme').addEventListener('click', () => applyTheme(theme === 'dark' ? 'light' : 'dark'));
+  document.querySelectorAll('#env-row .seg-chip').forEach((c) => c.classList.toggle('selected', c.dataset.env === envName));
 
   const engineGuard = (fn) => () => {
     if (engineReady) { fn(); return; }
@@ -915,13 +1055,61 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0a0c10);
-scene.fog = new THREE.FogExp2(0x0a0c10, 0.016);
+scene.background = new THREE.Color(0x02040a);
+scene.fog = new THREE.FogExp2(0x02040a, 0.016);
+
+/* container for everything environment-specific (ground, stars, grass, water,
+   aurora, moon). Rebuilt wholesale whenever the player switches realms. */
+const envGroup = new THREE.Group();
+scene.add(envGroup);
+const uTime = { value: 0 };   // shared clock for shaders (grass sway, water, stars)
 
 const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 200);
 camera.position.set(0, 12.5, 17.5);
 
-const controls = new THREE.OrbitControls(camera, canvas);
+/* Fallback orbit controls — a dependency-free look-around used only if the
+   OrbitControls addon failed to load, so the game always stays playable. */
+function createMinimalOrbit(cam, el) {
+  const ctl = {
+    target: new THREE.Vector3(0, 0.1, 0),
+    enabled: true, enableDamping: true, dampingFactor: 0.08, enablePan: false,
+    minDistance: 6.5, maxDistance: 20, minPolarAngle: 0.18,
+    maxPolarAngle: Math.PI / 2 - 0.12, rotateSpeed: 0.75
+  };
+  const dTheta = { v: 0 }, dPhi = { v: 0 };
+  let dragging = false, px = 0, py = 0;
+  el.addEventListener('pointerdown', (e) => { dragging = true; px = e.clientX; py = e.clientY; });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  el.addEventListener('pointermove', (e) => {
+    if (!dragging || !ctl.enabled) return;
+    dTheta.v -= 2 * Math.PI * (e.clientX - px) / el.clientHeight * ctl.rotateSpeed;
+    dPhi.v   -= 2 * Math.PI * (e.clientY - py) / el.clientHeight * ctl.rotateSpeed;
+    px = e.clientX; py = e.clientY;
+  });
+  el.addEventListener('wheel', (e) => {
+    if (!ctl.enabled) return;
+    const offset = cam.position.clone().sub(ctl.target);
+    offset.multiplyScalar(e.deltaY > 0 ? 1.1 : 0.9);
+    const r = offset.length();
+    if (r >= ctl.minDistance && r <= ctl.maxDistance) cam.position.copy(ctl.target).add(offset);
+  }, { passive: true });
+  ctl.update = function () {
+    const offset = cam.position.clone().sub(ctl.target);
+    const s = new THREE.Spherical().setFromVector3(offset);
+    s.theta += dTheta.v;
+    s.phi   += dPhi.v;
+    s.phi = Math.max(ctl.minPolarAngle, Math.min(ctl.maxPolarAngle, s.phi));
+    s.makeSafe();
+    cam.position.setFromSpherical(s).add(ctl.target);
+    cam.lookAt(ctl.target);
+    dTheta.v *= (1 - ctl.dampingFactor);
+    dPhi.v   *= (1 - ctl.dampingFactor);
+  };
+  return ctl;
+}
+const controls = window.THREE.OrbitControls
+  ? new THREE.OrbitControls(camera, canvas)
+  : createMinimalOrbit(camera, canvas);
 controls.target.set(0, 0.1, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
@@ -951,25 +1139,56 @@ const orbitLight = new THREE.PointLight(0xffc98a, 0.45, 26);   // slow ambient t
 orbitLight.position.set(5, 3.5, 0);
 scene.add(orbitLight);
 
-/* Post-processing — subtle bloom */
-const composer = new THREE.EffectComposer(renderer);
-composer.addPass(new THREE.RenderPass(scene, camera));
-const bloomPass = new THREE.UnrealBloomPass(
-  new THREE.Vector2(window.innerWidth, window.innerHeight), 0.32, 0.7, 0.9
-);
-composer.addPass(bloomPass);
+/* Post-processing — subtle bloom (falls back to direct render if unavailable) */
+let composer = null;
+let bloomPass = null;
+try {
+  composer = new THREE.EffectComposer(renderer);
+  composer.addPass(new THREE.RenderPass(scene, camera));
+  bloomPass = new THREE.UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight), 0.32, 0.7, 0.9
+  );
+  composer.addPass(bloomPass);
+} catch (e) {
+  composer = null; bloomPass = null;   // render straight to the canvas instead
+}
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  composer.setSize(window.innerWidth, window.innerHeight);
+  if (composer) composer.setSize(window.innerWidth, window.innerHeight);
 });
 
 /* ---------------- 3. ENVIRONMENT & MATERIALS ---------------- */
-/* Procedural studio environment → crisp reflections in the glass */
+/* Self-built studio environment → crisp reflections in the glass.
+   Built from a few bright panels instead of the RoomEnvironment addon, so it
+   works on every loading path and can never fail to boot. */
+function buildStudioEnv() {
+  const envScene = new THREE.Scene();
+  envScene.background = new THREE.Color(0x10141b);
+  const box = new THREE.BoxGeometry(1, 1, 1);
+  const panel = (hex, boost, pos, scl) => {
+    const mat = new THREE.MeshBasicMaterial({ color: hex });
+    mat.color.multiplyScalar(boost);             // >1 = bright HDR reflection source
+    const m = new THREE.Mesh(box, mat);
+    m.position.set(pos[0], pos[1], pos[2]);
+    m.scale.set(scl[0], scl[1], scl[2]);
+    envScene.add(m);
+  };
+  panel(0xffffff, 4.0, [0, 7, 0], [12, 0.2, 12]);   // top softbox
+  panel(0xbfd8ff, 2.6, [-7, 2, 0], [0.2, 7, 10]);   // cool key side
+  panel(0xffe3bd, 2.4, [7, 2, 0], [0.2, 7, 10]);    // warm fill side
+  panel(0x46586a, 1.4, [0, 2, -8], [14, 7, 0.2]);   // back wall
+  panel(0x2c3a47, 1.0, [0, 2, 8], [14, 7, 0.2]);    // front wall
+  return envScene;
+}
 const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
+try {
+  scene.environment = pmrem.fromScene(buildStudioEnv(), 0.04).texture;
+} catch (e) {
+  scene.environment = null;   // glass still renders via lights + transmission
+}
 
 const matWhiteGlass = new THREE.MeshPhysicalMaterial({
   color: 0xdfeef8, metalness: 0, roughness: 0.13,
@@ -986,12 +1205,12 @@ const matBlackGlass = new THREE.MeshPhysicalMaterial({
   envMapIntensity: 1.1, flatShading: true
 });
 const matSquareLight = new THREE.MeshPhysicalMaterial({
-  color: 0xa7c2d1, roughness: 0.42, metalness: 0,
+  color: 0xe6eef5, roughness: 0.42, metalness: 0,
   transmission: 0.12, thickness: 0.3, ior: 1.45,
   clearcoat: 0.15, clearcoatRoughness: 0.55, envMapIntensity: 0.45
 });
 const matSquareDark = new THREE.MeshPhysicalMaterial({
-  color: 0x16303e, roughness: 0.36, metalness: 0,
+  color: 0x0c1219, roughness: 0.36, metalness: 0,
   transmission: 0.16, thickness: 0.4, ior: 1.5,
   clearcoat: 0.2, clearcoatRoughness: 0.5, envMapIntensity: 0.5
 });
@@ -1000,7 +1219,7 @@ const matPedestal = new THREE.MeshPhysicalMaterial({
   transmission: 0.25, thickness: 0.6, ior: 1.5,
   clearcoat: 0.35, clearcoatRoughness: 0.4, envMapIntensity: 0.7
 });
-const groundMat = new THREE.MeshStandardMaterial({ color: 0x0a1a24, roughness: 0.95 });
+const groundMat = new THREE.MeshStandardMaterial({ color: 0x02040a, roughness: 0.95, envMapIntensity: 0.18 });
 
 /* Additive glow helpers */
 function glowMaterial(color, opacity) {
@@ -1023,7 +1242,8 @@ const squareMats = {};     // square -> material (per-square for emissive contro
   pedestal.receiveShadow = true;
   boardGroup.add(pedestal);
 
-  /* ground disc (catches shadow, fades into fog) */
+  /* ground disc (catches shadow, fades into fog) — lives in envGroup so a
+     realm switch can swap it for grass / water / snow */
   const ground = new THREE.Mesh(
     new THREE.CircleGeometry(46, 48),
     groundMat
@@ -1031,7 +1251,7 @@ const squareMats = {};     // square -> material (per-square for emissive contro
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.76;
   ground.receiveShadow = true;
-  scene.add(ground);
+  envGroup.add(ground);
 
   /* 64 glass squares */
   const sqGeo = new THREE.BoxGeometry(0.96, 0.25, 0.96);
@@ -1083,12 +1303,12 @@ const squareMats = {};     // square -> material (per-square for emissive contro
 
 /* Selection, last-move and check glows (reusable planes) */
 const planeGeo = new THREE.PlaneGeometry(0.94, 0.94);
-const selectGlow = new THREE.Mesh(planeGeo, glowMaterial(0x8fdcf0, 0.34));
+const selectGlow = new THREE.Mesh(planeGeo, glowMaterial(0x3ae0ff, 0.38));
 selectGlow.rotation.x = -Math.PI / 2; selectGlow.position.y = 0.016;
 selectGlow.visible = false; selectGlow.renderOrder = 5; boardGroup.add(selectGlow);
 
 function makeLastMoveGlow() {
-  const m = new THREE.Mesh(planeGeo, glowMaterial(0xf0c268, 0.3));
+  const m = new THREE.Mesh(planeGeo, glowMaterial(0x2fd0ff, 0.3));
   m.rotation.x = -Math.PI / 2; m.position.y = 0.012;
   m.visible = false; m.renderOrder = 4; boardGroup.add(m);
   return m;
@@ -1099,11 +1319,17 @@ const checkDisc = new THREE.Mesh(new THREE.CircleGeometry(0.44, 28), glowMateria
 checkDisc.rotation.x = -Math.PI / 2; checkDisc.position.y = 0.02;
 checkDisc.visible = false; checkDisc.renderOrder = 5; boardGroup.add(checkDisc);
 
-/* Legal-move markers */
+/* Legal-move markers — use NORMAL (not additive) blending so they stay vivid
+   on white tiles too; additive light just washes out on bright surfaces. */
 const markerDiscGeo = new THREE.CircleGeometry(0.17, 24);
 const markerRingGeo = new THREE.RingGeometry(0.33, 0.43, 28);
-const markerDiscMat = glowMaterial(0x8fe0f2, 0.85);
-const markerRingMat = glowMaterial(0xff7a6b, 0.9);
+function markerMaterial(color) {
+  return new THREE.MeshBasicMaterial({
+    color, transparent: true, opacity: 1.0, depthWrite: false, side: THREE.DoubleSide
+  });
+}
+const markerDiscMat = markerMaterial(0x00b4ff);   // vivid electric blue (quiet moves)
+const markerRingMat = markerMaterial(0xff2244);   // vivid red (captures)
 const markers = [];
 function clearMarkers() {
   markers.forEach((m) => boardGroup.remove(m));
@@ -1125,23 +1351,7 @@ function showMarkers(targetMap) {
   });
 }
 
-/* Ambient dust motes — a little life in the air */
-const DUST_COUNT = 260;
-const dustGeo = new THREE.BufferGeometry();
-const dustPos = new Float32Array(DUST_COUNT * 3);
-const dustSpeed = new Float32Array(DUST_COUNT);
-for (let i = 0; i < DUST_COUNT; i++) {
-  dustPos[i * 3]     = (Math.random() - 0.5) * 22;
-  dustPos[i * 3 + 1] = Math.random() * 8;
-  dustPos[i * 3 + 2] = (Math.random() - 0.5) * 22;
-  dustSpeed[i] = 0.12 + Math.random() * 0.3;
-}
-dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
-const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
-  color: 0x9fd8e8, size: 0.045, transparent: true, opacity: 0.45,
-  blending: THREE.AdditiveBlending, depthWrite: false
-}));
-scene.add(dust);
+/* (ambient motes are now built per-realm by buildMotes in the realm system) */
 
 /* ---------------- 5. PIECE GEOMETRY FACTORY ---------------- */
 function lathe(profile, segments) {
@@ -1239,14 +1449,17 @@ function clearAllPieces() {
   piecesBySquare.forEach((piece) => { scene.remove(piece.group); piece.material.dispose(); });
   piecesBySquare.clear();
   piecesById.clear();
-  /* safety sweep: remove any piece group left orphaned in the scene
-     (defends against any map/scene desync so a reset always leaves a clean board) */
+  /* safety sweep: remove ANY piece group left orphaned in the scene — matched by
+     its tag OR by containing a piece mesh — so a reset always leaves a clean board */
   for (let i = scene.children.length - 1; i >= 0; i--) {
     const child = scene.children[i];
-    if (child.userData && child.userData.isPieceGroup) {
-      scene.remove(child);
-      child.traverse((o) => { if (o.isMesh && o.material && o.material.dispose) o.material.dispose(); });
+    let isPiece = !!(child.userData && child.userData.isPieceGroup);
+    if (!isPiece && child.isGroup) {
+      child.traverse((o) => { if (o.isMesh && o.userData && o.userData.kind === 'piece') isPiece = true; });
     }
+    if (!isPiece) continue;
+    scene.remove(child);
+    child.traverse((o) => { if (o.isMesh && o.material && o.material.dispose) o.material.dispose(); });
   }
 }
 function rebuildPiecesFromGame() {
@@ -1258,6 +1471,41 @@ function rebuildPiecesFromGame() {
       if (cell) spawnPiece(cell.type, cell.color, FILES[f] + (8 - r));
     }
   }
+}
+
+/* SELF-HEALING SYNC — the chess.js position is the single source of truth.
+   After every completed move we diff the 3D scene against it and fix any
+   mismatch (stray, missing, or wrong piece), so a desync can never persist. */
+function reconcilePieces() {
+  const want = new Map();                       // square -> { type, color }
+  const board = game.board();
+  for (let r = 0; r < 8; r++) {
+    for (let f = 0; f < 8; f++) {
+      const cell = board[r][f];
+      if (cell) want.set(FILES[f] + (8 - r), cell);
+    }
+  }
+  /* remove 3D pieces that are no longer on the logical board */
+  const stale = [];
+  piecesBySquare.forEach((piece, sq) => { if (!want.has(sq)) stale.push(piece); });
+  stale.forEach((p) => {
+    piecesBySquare.delete(p.square);
+    piecesById.delete(p.id);
+    scene.remove(p.group);
+    if (p.material && p.material.dispose) p.material.dispose();
+  });
+  /* add / replace any logical piece that is missing or mismatched in 3D */
+  want.forEach((cell, sq) => {
+    const p = piecesBySquare.get(sq);
+    if (!p) { spawnPiece(cell.type, cell.color, sq); return; }
+    if (p.type !== cell.type || p.color !== cell.color) {
+      piecesBySquare.delete(sq);
+      piecesById.delete(p.id);
+      scene.remove(p.group);
+      if (p.material && p.material.dispose) p.material.dispose();
+      spawnPiece(cell.type, cell.color, sq);
+    }
+  });
 }
 
 /* ---------------- 6. INTERACTION (RAYCASTER) ---------------- */
@@ -1281,7 +1529,7 @@ function canInteract() {
   return state.mode === 'playing' && !state.busy && !state.over && state.turn === state.playerColor;
 }
 
-canvas.addEventListener('pointerdown', (e) => { downPos = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener('pointerdown', (e) => { sfx.unlock(); downPos = { x: e.clientX, y: e.clientY }; });
 canvas.addEventListener('pointerup', (e) => {
   if (!downPos) return;
   const dx = e.clientX - downPos.x, dy = e.clientY - downPos.y;
@@ -1348,6 +1596,7 @@ function selectSquare(square) {
   const p = squareToXZ(square);
   selectGlow.position.set(p.x, 0.016, p.z);
   selectGlow.visible = true;
+  sfx.play('select');
 }
 function clearSelection() {
   state.selected = null;
@@ -1357,9 +1606,34 @@ function clearSelection() {
 }
 
 /* ---------------- 7. MOVE ANIMATION & PARTICLES ---------------- */
+/* capture shockwave rings (declared early — the render loop ticks every frame,
+   so every effect-system state must exist before animate() can run) */
+const shockGeo = new THREE.RingGeometry(0.42, 0.5, 40);
+const shocks = [];
+function spawnShockwave(position, color) {
+  const mesh = new THREE.Mesh(shockGeo, glowMaterial(color, 0.85));
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.set(position.x, 0.03, position.z);
+  mesh.renderOrder = 9;
+  scene.add(mesh);
+  shocks.push({ mesh, life: 0 });
+}
+function updateShocks(dt) {
+  for (let i = shocks.length - 1; i >= 0; i--) {
+    const s = shocks[i];
+    s.life += dt;
+    const t = s.life / 0.55;
+    if (t >= 1) { scene.remove(s.mesh); s.mesh.material.dispose(); shocks.splice(i, 1); continue; }
+    const sc = 1 + t * 7;
+    s.mesh.scale.set(sc, sc, sc);
+    s.mesh.material.opacity = (1 - t) * 0.85;
+  }
+}
+
 const bursts = [];
-function spawnBurst(position, color, count, speed) {
+function spawnBurst(position, color, count, speed, ttl) {
   const n = count || 26;
+  const life = ttl || 0.85;
   const geo = new THREE.BufferGeometry();
   const pos = new Float32Array(n * 3);
   const vel = new Float32Array(n * 3);
@@ -1380,12 +1654,12 @@ function spawnBurst(position, color, count, speed) {
   const points = new THREE.Points(geo, mat);
   points.renderOrder = 10;
   scene.add(points);
-  bursts.push({ points, vel, life: 0, ttl: 0.85 });
+  bursts.push({ points, vel, age: 0, ttl: life });
 }
 function updateBursts(dt) {
   for (let i = bursts.length - 1; i >= 0; i--) {
     const b = bursts[i];
-    b.life += dt;
+    b.age += dt;
     const attr = b.points.geometry.attributes.position;
     for (let j = 0; j < attr.count; j++) {
       attr.array[j * 3]     += b.vel[j * 3] * dt;
@@ -1394,8 +1668,8 @@ function updateBursts(dt) {
       b.vel[j * 3 + 1] -= 3.2 * dt;   // gravity
     }
     attr.needsUpdate = true;
-    b.points.material.opacity = Math.max(0, 1 - b.life / b.ttl);
-    if (b.life >= b.ttl) {
+    b.points.material.opacity = Math.max(0, 1 - b.age / b.ttl);
+    if (b.age >= b.ttl) {
       scene.remove(b.points);
       b.points.geometry.dispose();
       b.points.material.dispose();
@@ -1418,7 +1692,9 @@ function animateMove(mv, onDone) {
     const cap = piecesBySquare.get(capSq);
     if (cap && cap !== piece) {
       const at = cap.group.position.clone(); at.y += 0.45;
-      spawnBurst(at, cap.color === 'w' ? 0xcfeaff : 0x6fd8c8, 30, 2.4);
+      spawnBurst(at, cap.color === 'w' ? 0xe8f6ff : 0x5fd9ff, 30, 2.4);
+      spawnShockwave(at, 0x35dcff);   // expanding electric ring
+      sfx.play('capture');
       piecesBySquare.delete(capSq);
       piecesById.delete(cap.id);
       new TWEEN.Tween(cap.group.scale)
@@ -1433,6 +1709,8 @@ function animateMove(mv, onDone) {
   piecesBySquare.delete(mv.from);
   piece.square = mv.to;
   piecesBySquare.set(mv.to, piece);
+
+  if (!mv.captured) sfx.play('move');
 
   /* glide with a small hop — never a teleport */
   const from = squareToXZ(mv.from), to = squareToXZ(mv.to);
@@ -1484,7 +1762,7 @@ function finishVisualMove(mv, piece, animToken, onDone) {
   /* promotion — swap the pawn for the chosen piece with a sparkle pop */
   if (mv.promotion) {
     const p = squareToXZ(mv.to);
-    spawnBurst(new THREE.Vector3(p.x, 0.9, p.z), 0xf5d28a, 22, 1.6);
+    spawnBurst(new THREE.Vector3(p.x, 0.9, p.z), 0x8ceaff, 22, 1.6);
     const normScale = piece.group.userData.normScale || 1;
     removePieceVisual(piece, true);
     const born = spawnPiece(mv.promotion, mv.color, mv.to);
@@ -1503,12 +1781,16 @@ function finishVisualMove(mv, piece, animToken, onDone) {
 
 /* ---------------- 8. GAME FLOW ---------------- */
 let checkKing = null;
+let wasInCheck = false;
 function updateCheckGlow() {
   /* reset previous */
   if (checkKing) { checkKing.material.emissiveIntensity = 0; checkKing = null; }
   checkDisc.visible = false;
   const inCheck = game.isCheck();
   $('check-badge').classList.toggle('on', inCheck && state.mode === 'playing');
+  $('check-vignette').classList.toggle('on', inCheck && state.mode === 'playing');
+  if (inCheck && !wasInCheck) sfx.play('check');
+  wasInCheck = inCheck;
   if (!inCheck) return;
   /* find the king of the side to move */
   let king = null;
@@ -1550,6 +1832,7 @@ function executeMove(params) {
   animateMove(mv, afterMove);
 }
 function afterMove() {
+  reconcilePieces();            // force the 3D scene to match the chess position
   refreshHistoryUI();
   refreshCapturedUI();
   updateCheckGlow();
@@ -1583,6 +1866,7 @@ function endGame() {
   state.over = true;
   state.busy = false;
   $('check-badge').classList.remove('on');
+  $('check-vignette').classList.remove('on');
   const mated = game.isCheckmate();
   let result, reason;
   if (mated) {
@@ -1599,6 +1883,18 @@ function endGame() {
   state.result = result;
   stats[state.level][result === 'win' ? 'w' : result === 'loss' ? 'l' : 'd']++;
   saveStats();
+
+  /* celebration / commiseration */
+  if (result === 'win') {
+    spawnBurst(new THREE.Vector3(0, 1.4, 0), 0x8ceaff, 90, 4.2, 1.6);
+    spawnBurst(new THREE.Vector3(0, 1.0, 0), 0xffffff, 60, 3.4, 1.4);
+    sfx.play('win');
+    cinematicPush();   // slow camera push-in for drama
+  } else if (result === 'loss') {
+    sfx.play('loss');
+  } else {
+    sfx.play('draw');
+  }
 
   const word = $('result-word');
   word.textContent = result === 'win' ? 'VICTORY' : result === 'loss' ? 'DEFEAT' : 'DRAW';
@@ -1872,6 +2168,18 @@ function downloadPGN() {
   setTimeout(() => URL.revokeObjectURL(a.href), 1500);
 }
 
+/* slow dramatic push-in used on game end */
+function cinematicPush() {
+  const target = controls.target.clone();
+  const dir = camera.position.clone().sub(target);
+  const from = dir.length();
+  const unit = dir.normalize();
+  const t = { d: from };
+  new TWEEN.Tween(t).to({ d: from * 0.85 }, 1100)
+    .easing(TWEEN.Easing.Cubic.InOut)
+    .onUpdate(() => camera.position.copy(target).addScaledVector(unit, t.d))
+    .start();
+}
 function introCamera() {
   controls.enabled = false;
   const s = state.playerColor === 'b' ? -1 : 1;   // orbit to the player's side of the board
@@ -1898,7 +2206,8 @@ function animate() {
   markers.forEach((m) => {
     const s = 1 + 0.14 * Math.sin(elapsed * 5 + m.userData.phase);
     m.scale.setScalar(s);
-    m.material.opacity = 0.6 + 0.3 * Math.sin(elapsed * 5 + m.userData.phase);
+    /* keep opacity high (0.72–1.0) so markers stay legible on white tiles */
+    m.material.opacity = 0.86 + 0.14 * Math.sin(elapsed * 5 + m.userData.phase);
   });
   lastMoveGlows.forEach((g) => { g.material.opacity = 0.24 + 0.08 * Math.sin(elapsed * 2.4); });
   selectGlow.material.opacity = 0.28 + 0.12 * Math.sin(elapsed * 4);
@@ -1910,37 +2219,288 @@ function animate() {
     checkDisc.material.opacity = 0.35 + 0.25 * Math.sin(elapsed * 6);
   }
 
-  /* dust drift */
-  const dAttr = dust.geometry.attributes.position;
-  for (let i = 0; i < DUST_COUNT; i++) {
-    dAttr.array[i * 3 + 1] += dustSpeed[i] * dt;
-    if (dAttr.array[i * 3 + 1] > 8) dAttr.array[i * 3 + 1] = 0;
-  }
-  dAttr.needsUpdate = true;
+  uTime.value = elapsed;   // drives grass sway, water, star twinkle, aurora
+
+  /* realm motes drift */
+  envGroup.children.forEach((o) => {
+    if (o.isPoints && o.userData.mote) {
+      const attr = o.geometry.attributes.position;
+      const { spd, ph } = o.userData.mote;
+      for (let i = 0; i < attr.count; i++) {
+        attr.array[i * 3 + 1] += spd[i] * dt;
+        attr.array[i * 3] += Math.sin(elapsed * 0.7 + ph[i]) * 0.004;
+        if (attr.array[i * 3 + 1] > 6) attr.array[i * 3 + 1] = 0;
+      }
+      attr.needsUpdate = true;
+    }
+  });
 
   updateBursts(dt);
-  composer.render();
+  updateShocks(dt);
+  if (composer) composer.render();
+  else renderer.render(scene, camera);
 }
 
 /* ---------------- FINISH ENGINE BOOT ---------------- */
 rebuildPiecesFromGame();   // board is set the moment the engine is alive
 animate();
 
-/* re-theme the 3D scene to match the UI theme */
-function setSceneTheme(name) {
-  const t = SCENE_THEMES[name] || SCENE_THEMES.dark;
-  scene.background.setHex(t.bg);
-  scene.fog.color.setHex(t.bg);
-  groundMat.color.setHex(t.ground);
-  hemiLight.intensity = t.hemi;
-  keyLight.intensity = t.key;
-  renderer.toneMappingExposure = t.exposure;
-  bloomPass.strength = t.bloom;
+/* ============ REALM BUILDERS — living 3D environments ============ */
+function clearEnv() {
+  for (let i = envGroup.children.length - 1; i >= 0; i--) {
+    const o = envGroup.children[i];
+    envGroup.remove(o);
+    o.traverse((n) => {
+      if (n.geometry) n.geometry.dispose();
+      const m = n.material;
+      if (m) (Array.isArray(m) ? m : [m]).forEach((mm) => mm.dispose());
+    });
+  }
 }
-setSceneTheme(theme);   // apply whichever theme the UI already picked
+function envGround(color) {
+  const m = new THREE.Mesh(
+    new THREE.CircleGeometry(46, 48),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.95, envMapIntensity: 0.15 })
+  );
+  m.rotation.x = -Math.PI / 2; m.position.y = -0.76; m.receiveShadow = true;
+  envGroup.add(m);
+  return m;
+}
+/* twinkling star dome */
+function buildStars(density) {
+  const n = Math.floor(900 * density);
+  const pos = new Float32Array(n * 3), size = new Float32Array(n), phase = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const r = 55 + Math.random() * 40;
+    const th = Math.random() * Math.PI * 2;
+    const ph = Math.acos(Math.random() * 0.95);      // upper dome only
+    pos[i * 3] = r * Math.sin(ph) * Math.cos(th);
+    pos[i * 3 + 1] = r * Math.cos(ph) - 4;
+    pos[i * 3 + 2] = r * Math.sin(ph) * Math.sin(th);
+    size[i] = 0.6 + Math.random() * 1.8;
+    phase[i] = Math.random() * Math.PI * 2;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
+  g.setAttribute('aPhase', new THREE.BufferAttribute(phase, 1));
+  const m = new THREE.ShaderMaterial({
+    uniforms: { uTime: uTime },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: 'attribute float aSize; attribute float aPhase; varying float vP;' +
+      'void main(){ vP=aPhase; vec4 mv=modelViewMatrix*vec4(position,1.0);' +
+      'gl_PointSize=aSize*(220.0/-mv.z); gl_Position=projectionMatrix*mv; }',
+    fragmentShader: 'uniform float uTime; varying float vP;' +
+      'void main(){ float d=length(gl_PointCoord-0.5);' +
+      'float a=smoothstep(0.5,0.05,d);' +
+      'float tw=0.55+0.45*sin(uTime*2.2+vP*7.0);' +
+      'gl_FragColor=vec4(vec3(0.75,0.88,1.0), a*tw); }'
+  });
+  const pts = new THREE.Points(g, m);
+  pts.renderOrder = 1;
+  envGroup.add(pts);
+}
+/* glowing moon + halo */
+function buildMoon() {
+  const moon = new THREE.Mesh(new THREE.CircleGeometry(3.2, 32),
+    new THREE.MeshBasicMaterial({ color: 0xe8f4ff, transparent: true, opacity: 0.95 }));
+  moon.position.set(-20, 26, -42); moon.lookAt(0, 0, 0);
+  const halo = new THREE.Mesh(new THREE.CircleGeometry(8, 32),
+    glowMaterial(0x9db8ff, 0.10));
+  halo.position.copy(moon.position); halo.lookAt(0, 0, 0);
+  envGroup.add(moon); envGroup.add(halo);
+}
+/* swaying instanced grass */
+function buildGrass() {
+  const blade = new THREE.ConeGeometry(0.035, 0.42, 4);
+  blade.translate(0, 0.21, 0);
+  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = uTime;
+    shader.vertexShader = 'uniform float uTime;\n' + shader.vertexShader.replace(
+      '#include <begin_vertex>',
+      '#include <begin_vertex>\n' +
+      'float sway = sin(uTime*1.8 + (instanceMatrix[3][0] + instanceMatrix[3][2])*2.0) * 0.5 * position.y;\n' +
+      'transformed.x += sway; transformed.z += sway*0.5;'
+    );
+  };
+  const COUNT = 2600;
+  const mesh = new THREE.InstancedMesh(blade, mat, COUNT);
+  const dummy = new THREE.Object3D();
+  const col = new THREE.Color();
+  for (let i = 0; i < COUNT; i++) {
+    const r = 6.8 + Math.random() * 27;
+    const a = Math.random() * Math.PI * 2;
+    dummy.position.set(Math.cos(a) * r, -0.76, Math.sin(a) * r);
+    dummy.rotation.set(0, Math.random() * Math.PI * 2, 0);
+    const s = 0.7 + Math.random() * 1.3;
+    dummy.scale.set(s, s, s);
+    dummy.updateMatrix();
+    mesh.setMatrixAt(i, dummy.matrix);
+    col.setHSL(0.33 + Math.random() * 0.05, 0.55, 0.22 + Math.random() * 0.16);
+    mesh.setColorAt(i, col);
+  }
+  mesh.instanceMatrix.needsUpdate = true;
+  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  envGroup.add(mesh);
+}
+/* animated rippling water with an island under the board */
+function buildWater(bg) {
+  const island = new THREE.Mesh(new THREE.CylinderGeometry(5.9, 6.6, 1.4, 48),
+    new THREE.MeshStandardMaterial({ color: 0x0b1b22, roughness: 0.9 }));
+  island.position.y = -1.05; island.receiveShadow = true;
+  envGroup.add(island);
+  const g = new THREE.PlaneGeometry(96, 96, 90, 90);
+  const m = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: uTime,
+      uDeep: { value: new THREE.Color(0x02141c) },
+      uMid: { value: new THREE.Color(0x0a5468) },
+      uGlint: { value: new THREE.Color(0x9ff0ff) },
+      uFog: { value: new THREE.Color(bg) }
+    },
+    vertexShader: 'uniform float uTime; varying vec2 vXZ;' +
+      'void main(){ vec3 p=position;' +
+      'float w=sin(p.x*0.22+uTime*1.1)+cos(p.y*0.19-uTime*0.8)+sin((p.x+p.y)*0.11+uTime*0.5);' +
+      'p.z+=w*0.14; vXZ=p.xy;' +
+      'gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0); }',
+    fragmentShader: 'uniform float uTime; uniform vec3 uDeep; uniform vec3 uMid; uniform vec3 uGlint; uniform vec3 uFog; varying vec2 vXZ;' +
+      'void main(){ float glint=pow(max(0.0, sin(vXZ.x*3.1+uTime*2.2)*sin(vXZ.y*2.7-uTime*1.7)), 6.0);' +
+      'float d=length(vXZ)/48.0;' +
+      'vec3 col=mix(uMid, uDeep, smoothstep(0.0,0.9,d));' +
+      'col+=uGlint*glint*0.5;' +
+      'col=mix(col, uFog, smoothstep(0.45,1.0,d));' +
+      'gl_FragColor=vec4(col,1.0); }'
+  });
+  const water = new THREE.Mesh(g, m);
+  water.rotation.x = -Math.PI / 2; water.position.y = -0.72;
+  envGroup.add(water);
+}
+/* undulating aurora ribbons */
+function buildAurora() {
+  const conf = [
+    { z: -30, y: 13, ry: 0.1,  a: 0x37ffb4, b: 0x1fb6ff },
+    { z: -40, y: 17, ry: -0.2, a: 0x1fb6ff, b: 0x8f5cff },
+    { z: -24, y: 10, ry: 0.3,  a: 0x37ffb4, b: 0x9fffe0 }
+  ];
+  conf.forEach((c, idx) => {
+    const g = new THREE.PlaneGeometry(70, 14, 80, 1);
+    const m = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: uTime,
+        uA: { value: new THREE.Color(c.a) },
+        uB: { value: new THREE.Color(c.b) },
+        uSeed: { value: idx * 2.1 }
+      },
+      transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
+      vertexShader: 'uniform float uTime; uniform float uSeed; varying vec2 vUv;' +
+        'void main(){ vUv=uv; vec3 p=position;' +
+        'p.y += sin(p.x*0.12+uTime*0.6+uSeed)*1.6 + sin(p.x*0.05-uTime*0.3+uSeed)*2.2;' +
+        'gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0); }',
+      fragmentShader: 'uniform float uTime; uniform vec3 uA; uniform vec3 uB; uniform float uSeed; varying vec2 vUv;' +
+        'void main(){ float band=sin(vUv.x*9.4+uTime*0.7+uSeed+vUv.y*3.0);' +
+        'float a=smoothstep(0.0,0.9,vUv.y)*smoothstep(1.0,0.55,vUv.y);' +
+        'a*=0.5+0.5*band;' +
+        'a*=smoothstep(0.0,0.15,vUv.x)*smoothstep(1.0,0.85,vUv.x);' +
+        'vec3 col=mix(uA,uB,0.5+0.5*sin(vUv.x*4.0+uTime*0.4+uSeed));' +
+        'gl_FragColor=vec4(col, a*0.35); }'
+    });
+    const ribbon = new THREE.Mesh(g, m);
+    ribbon.position.set(0, c.y, c.z);
+    ribbon.rotation.y = c.ry;
+    ribbon.rotation.x = -0.12;
+    ribbon.renderOrder = 2;
+    envGroup.add(ribbon);
+  });
+}
+/* drifting motes: pollen (day) */
+function buildMotes(kind) {
+  const n = 140;
+  const pos = new Float32Array(n * 3), spd = new Float32Array(n), ph = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    pos[i * 3] = (Math.random() - 0.5) * 30;
+    pos[i * 3 + 1] = Math.random() * 6;
+    pos[i * 3 + 2] = (Math.random() - 0.5) * 30;
+    spd[i] = 0.1 + Math.random() * 0.25;
+    ph[i] = Math.random() * Math.PI * 2;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const m = new THREE.PointsMaterial({
+    color: kind === 'pollen' ? 0xfff3c0 : 0xc6ff9e,
+    size: 0.06, transparent: true, opacity: 0.6,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  const pts = new THREE.Points(g, m);
+  pts.userData.mote = { spd, ph };
+  envGroup.add(pts);
+}
+/* rebuild the whole 3D world for a realm */
+function setSceneEnv(name) {
+  const e = ENVS[name] || ENVS.midnight;
+  clearEnv();
+  scene.background.setHex(e.bg);
+  scene.fog.color.setHex(e.bg);
+  scene.fog.density = e.fog;
+  hemiLight.intensity = e.hemi;
+  keyLight.intensity = e.key;
+  keyLight.color.setHex(e.keyColor);
+  renderer.toneMappingExposure = e.exposure;
+  if (bloomPass) bloomPass.strength = e.bloom;
+  /* environment reflections — pieces full, board duller to avoid glare */
+  matWhiteGlass.envMapIntensity = e.envRef;
+  matBlackGlass.envMapIntensity = e.envRef;
+  matPedestal.envMapIntensity = e.envRef * 0.55;
+  for (const sq in squareMats) squareMats[sq].envMapIntensity = e.envRef * 0.5;
+  piecesBySquare.forEach((p) => { p.material.envMapIntensity = e.envRef; });
+  /* glass tint: pale ice reads beautifully against night, but vanishes on a
+     bright day sky — so in daylight realms the white army swaps to blue-graphite
+     glass (black stays obsidian). Promotion pieces inherit this automatically
+     because they clone the already-tinted base material. */
+  const daylight = (e.ui === 'light');
+  const wCol = daylight ? 0x55616d : 0xdfeef8;
+  const wAtt = daylight ? 0x3d4a55 : 0xcfeaff;
+  matWhiteGlass.color.setHex(wCol);
+  matWhiteGlass.attenuationColor.setHex(wAtt);
+  piecesBySquare.forEach((p) => {
+    if (p.color === 'w') {
+      p.material.color.setHex(wCol);
+      p.material.attenuationColor.setHex(wAtt);
+    }
+  });
+  /* terrain */
+  if (e.water) buildWater(e.bg);
+  else envGround(e.ground);
+  if (e.grass) buildGrass();
+  /* sky life */
+  if (e.stars > 0) buildStars(e.stars);
+  if (e.moon) buildMoon();
+  if (e.aurora) buildAurora();
+  if (e.motes !== 'none') buildMotes(e.motes);
+}
+/* apply whichever realm the UI already picked — but a broken realm must never
+   block the whole engine: fall back to a plain midnight scene and keep going */
+try {
+  setSceneEnv(envName);
+} catch (realmErr) {
+  console.error('Initial realm build failed — using plain midnight fallback:', realmErr);
+  scene.background.setHex(0x030510);
+  scene.fog.color.setHex(0x030510);
+  hemiLight.intensity = 0.16;
+  keyLight.intensity = 0.55;
+  renderer.toneMappingExposure = 0.82;
+  if (bloomPass) bloomPass.strength = 0.6;
+}
 
 /* expose game-flow entry points to the (already wired) UI */
-GG.setTheme = setSceneTheme;
+GG.setEnv = (name) => {
+  try { setSceneEnv(name); }
+  catch (realmErr) {
+    console.error('Realm switch failed:', realmErr);
+    try { setSceneEnv('midnight'); } catch (e2) { /* plain scene already set */ }
+    showBanner('That realm glitched — switched back to Midnight.', true, 3200);
+  }
+};
 GG.start  = (lvl) => { resetGame(lvl); introCamera(); };
 GG.undo   = undoMove;
 GG.reset  = () => { if (state.mode === 'playing') resetGame(); };
@@ -1964,14 +2524,19 @@ engineReady = true;
 /* ================= end initGame ================= */
 
 /* ================= BOOT SEQUENCE ================= */
-applyTheme(loadTheme(), false);            // saved theme before first paint of the menu
+applyEnv(loadEnv(), false);                // saved realm before first paint of the menu
 wireUI();                                  // menu is interactive immediately (also refreshes records)
-(async function boot() {
-  showBanner('Loading 3D engine…');
+let bootAttempts = 0;
+async function runBoot() {
+  bootAttempts++;
+  engineFailed = false;
+  showBanner((bootAttempts > 1 ? 'Retrying… ' : '') + 'Loading 3D engine…');
   const failedLib = await loadLibraries();
   if (failedLib) {
+    /* one automatic retry before declaring failure (CDNs are flaky) */
+    if (bootAttempts < 3) { runBoot(); return; }
     engineFailed = true;
-    showBanner('Could not load ' + failedLib + ' from any CDN. Check your internet connection and reload the page.', true);
+    showBanner('Could not load ' + failedLib + ' from any CDN. Check your internet connection.', true, 0, true);
     return;
   }
   try {
@@ -1980,9 +2545,12 @@ wireUI();                                  // menu is interactive immediately (a
   } catch (err) {
     console.error('Glass Gambit boot error:', err);
     engineFailed = true;
-    showBanner('The 3D engine failed to start (' + (err && err.message ? err.message : 'unknown error') + '). Try reloading.', true);
+    showBanner('The 3D engine failed to start (' + (err && err.message ? err.message : 'unknown error') + ').', true, 0, true);
   }
-})();
+}
+/* manual retry = clean full reload (never re-runs a half-initialised engine) */
+$('banner-retry').addEventListener('click', () => location.reload());
+runBoot();
 })();
 </script>
 </body>
