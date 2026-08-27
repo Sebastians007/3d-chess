@@ -15,10 +15,10 @@
    GLASS GAMBIT — UI STYLES
    Deep petrol palette · amber gold + glacial ice accents
    ============================================================ */
-/* ---------- DARK theme: true near-black graphite (default) ---------- */
+/* ---------- DARK theme: deep night (default) ---------- */
 :root{
-  --bg-0:#07080b;
-  --bg-1:#11141b;
+  --bg-0:#04050a;
+  --bg-1:#0b0e16;
   --ink:#eef2f6;
   --ink-dim:#a6b2c0;
   --ink-faint:#66717f;
@@ -27,13 +27,13 @@
   --ice:#7fd6e8;
   --ice-hi:#c9f0fa;
   --danger:#ff5d5d;
-  --panel-bg:linear-gradient(160deg, rgba(24,29,38,.78), rgba(12,14,19,.72));
+  --panel-bg:linear-gradient(160deg, rgba(17,21,30,.85), rgba(8,10,16,.8));
   --panel-border:rgba(150,180,210,.14);
-  --btn-bg:linear-gradient(160deg, rgba(34,41,54,.8), rgba(18,22,30,.72));
+  --btn-bg:linear-gradient(160deg, rgba(28,34,46,.85), rgba(14,17,25,.78));
   --btn-border:rgba(150,180,210,.2);
-  --scrim:rgba(4,5,8,.66);
-  --menu-scrim:rgba(5,6,9,.78);
-  --shadow:0 18px 50px rgba(0,0,0,.55);
+  --scrim:rgba(2,3,6,.72);
+  --menu-scrim:rgba(3,4,8,.84);
+  --shadow:0 18px 50px rgba(0,0,0,.65);
   --panel-radius:14px;
   --font-display:"Cinzel", serif;
   --font-body:"Jost", sans-serif;
@@ -41,8 +41,8 @@
 }
 /* ---------- LIGHT theme: porcelain glass in daylight ---------- */
 [data-theme="light"]{
-  --bg-0:#dce6ec;
-  --bg-1:#f2f7fa;
+  --bg-0:#e4edf2;
+  --bg-1:#f8fbfd;
   --ink:#12242e;
   --ink-dim:#41596a;
   --ink-faint:#7d95a3;
@@ -737,9 +737,11 @@ function refreshMenuStats() {
 }
 
 /* ---- theme: dark petrol (default) / light porcelain ---- */
+/* Night = near-black with cool moonlight and a bright starfield.
+   Day  = bright airy sky with warm sunlight. Deliberately extreme contrast. */
 const SCENE_THEMES = {
-  dark:  { bg: 0x0a0c10, ground: 0x10131a, hemi: 0.5,  key: 1.0,  exposure: 1.02, bloom: 0.32 },
-  light: { bg: 0xdfe9ee, ground: 0xc2d1d9, hemi: 0.85, key: 1.25, exposure: 1.08, bloom: 0.16 }
+  dark:  { bg: 0x02040a, ground: 0x060a14, hemi: 0.18, key: 0.5,  keyColor: 0x9db8ff, exposure: 0.85, bloom: 0.55, dust: 0.8,  dustColor: 0xcfe0ff },
+  light: { bg: 0xe9f1f5, ground: 0xcfdde4, hemi: 1.0,  key: 1.4,  keyColor: 0xfff3d9, exposure: 1.12, bloom: 0.06, dust: 0.15, dustColor: 0x9fd8e8 }
 };
 let theme = 'dark';
 function applyTheme(name, persist) {
@@ -915,8 +917,8 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0a0c10);
-scene.fog = new THREE.FogExp2(0x0a0c10, 0.016);
+scene.background = new THREE.Color(0x02040a);
+scene.fog = new THREE.FogExp2(0x02040a, 0.016);
 
 const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 200);
 camera.position.set(0, 12.5, 17.5);
@@ -1239,14 +1241,17 @@ function clearAllPieces() {
   piecesBySquare.forEach((piece) => { scene.remove(piece.group); piece.material.dispose(); });
   piecesBySquare.clear();
   piecesById.clear();
-  /* safety sweep: remove any piece group left orphaned in the scene
-     (defends against any map/scene desync so a reset always leaves a clean board) */
+  /* safety sweep: remove ANY piece group left orphaned in the scene — matched by
+     its tag OR by containing a piece mesh — so a reset always leaves a clean board */
   for (let i = scene.children.length - 1; i >= 0; i--) {
     const child = scene.children[i];
-    if (child.userData && child.userData.isPieceGroup) {
-      scene.remove(child);
-      child.traverse((o) => { if (o.isMesh && o.material && o.material.dispose) o.material.dispose(); });
+    let isPiece = !!(child.userData && child.userData.isPieceGroup);
+    if (!isPiece && child.isGroup) {
+      child.traverse((o) => { if (o.isMesh && o.userData && o.userData.kind === 'piece') isPiece = true; });
     }
+    if (!isPiece) continue;
+    scene.remove(child);
+    child.traverse((o) => { if (o.isMesh && o.material && o.material.dispose) o.material.dispose(); });
   }
 }
 function rebuildPiecesFromGame() {
@@ -1258,6 +1263,41 @@ function rebuildPiecesFromGame() {
       if (cell) spawnPiece(cell.type, cell.color, FILES[f] + (8 - r));
     }
   }
+}
+
+/* SELF-HEALING SYNC — the chess.js position is the single source of truth.
+   After every completed move we diff the 3D scene against it and fix any
+   mismatch (stray, missing, or wrong piece), so a desync can never persist. */
+function reconcilePieces() {
+  const want = new Map();                       // square -> { type, color }
+  const board = game.board();
+  for (let r = 0; r < 8; r++) {
+    for (let f = 0; f < 8; f++) {
+      const cell = board[r][f];
+      if (cell) want.set(FILES[f] + (8 - r), cell);
+    }
+  }
+  /* remove 3D pieces that are no longer on the logical board */
+  const stale = [];
+  piecesBySquare.forEach((piece, sq) => { if (!want.has(sq)) stale.push(piece); });
+  stale.forEach((p) => {
+    piecesBySquare.delete(p.square);
+    piecesById.delete(p.id);
+    scene.remove(p.group);
+    if (p.material && p.material.dispose) p.material.dispose();
+  });
+  /* add / replace any logical piece that is missing or mismatched in 3D */
+  want.forEach((cell, sq) => {
+    const p = piecesBySquare.get(sq);
+    if (!p) { spawnPiece(cell.type, cell.color, sq); return; }
+    if (p.type !== cell.type || p.color !== cell.color) {
+      piecesBySquare.delete(sq);
+      piecesById.delete(p.id);
+      scene.remove(p.group);
+      if (p.material && p.material.dispose) p.material.dispose();
+      spawnPiece(cell.type, cell.color, sq);
+    }
+  });
 }
 
 /* ---------------- 6. INTERACTION (RAYCASTER) ---------------- */
@@ -1550,6 +1590,7 @@ function executeMove(params) {
   animateMove(mv, afterMove);
 }
 function afterMove() {
+  reconcilePieces();            // force the 3D scene to match the chess position
   refreshHistoryUI();
   refreshCapturedUI();
   updateCheckGlow();
@@ -1934,8 +1975,13 @@ function setSceneTheme(name) {
   groundMat.color.setHex(t.ground);
   hemiLight.intensity = t.hemi;
   keyLight.intensity = t.key;
+  if (t.keyColor) keyLight.color.setHex(t.keyColor);
   renderer.toneMappingExposure = t.exposure;
   bloomPass.strength = t.bloom;
+  if (dust) {
+    dust.material.opacity = t.dust;
+    if (t.dustColor) dust.material.color.setHex(t.dustColor);
+  }
 }
 setSceneTheme(theme);   // apply whichever theme the UI already picked
 
