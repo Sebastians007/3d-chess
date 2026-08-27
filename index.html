@@ -666,6 +666,39 @@ async function loadChessJs() {
    engine + addons are loaded as ES modules (examples/jsm exists in
    every release). Each source rewrites the addons' internal `three`
    import to its own core URL, keeping one shared module instance.   */
+function threeReady() {
+  return !!(window.THREE && window.THREE.WebGLRenderer && window.THREE.OrbitControls &&
+    window.THREE.EffectComposer && window.THREE.RenderPass && window.THREE.UnrealBloomPass);
+}
+/* ---- Source A: classic <script> tags (no dynamic import at all) ----
+   three r147 is the last release that ships examples/js, so core + every addon
+   can be loaded as plain globals. This works even where import() is blocked. */
+const THREE_R147_FILES = [
+  'build/three.min.js',
+  'examples/js/shaders/CopyShader.js',
+  'examples/js/shaders/LuminosityHighPassShader.js',
+  'examples/js/postprocessing/EffectComposer.js',
+  'examples/js/postprocessing/RenderPass.js',
+  'examples/js/postprocessing/ShaderPass.js',
+  'examples/js/postprocessing/UnrealBloomPass.js',
+  'examples/js/controls/OrbitControls.js'
+];
+const THREE_GLOBAL_BASES = [
+  'https://cdn.jsdelivr.net/npm/three@0.147.0/',
+  'https://unpkg.com/three@0.147.0/'
+];
+async function loadThreeGlobals() {
+  if (threeReady()) return true;
+  for (const base of THREE_GLOBAL_BASES) {
+    let ok = true;
+    for (const f of THREE_R147_FILES) {
+      if (!(await loadScript(base + f, 15000))) { ok = false; break; }
+    }
+    if (ok && threeReady()) return true;
+  }
+  return false;
+}
+/* ---- Source B: native ES modules (fallback) ---- */
 const THREE_SOURCES = [
   { label: 'jsDelivr', core: 'https://cdn.jsdelivr.net/npm/three@0.147.0/+esm',
     addon: (f) => 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/jsm/' + f + '/+esm' },
@@ -676,7 +709,6 @@ const THREE_SOURCES = [
 ];
 const THREE_ADDONS = {
   OrbitControls: 'controls/OrbitControls.js',
-  RoomEnvironment: 'environments/RoomEnvironment.js',
   EffectComposer: 'postprocessing/EffectComposer.js',
   RenderPass: 'postprocessing/RenderPass.js',
   ShaderPass: 'postprocessing/ShaderPass.js',
@@ -692,7 +724,9 @@ function importWithTimeout(url, ms) {
   });
 }
 async function loadThreeEcosystem() {
-  if (window.THREE && window.THREE.WebGLRenderer && window.THREE.OrbitControls) return true;
+  if (threeReady()) return true;
+  showBanner('Loading Three.js (script tags)…');
+  if (await loadThreeGlobals()) return true;   // classic scripts — most compatible
   for (const src of THREE_SOURCES) {
     try {
       showBanner('Loading Three.js (' + src.label + ')…');
@@ -714,9 +748,7 @@ async function loadThreeEcosystem() {
 /* ---- library manifest: every lib has fallback CDNs + a global sanity check ---- */
 async function loadLibraries() {
   const steps = [
-    { name: 'Three.js + addons', custom: loadThreeEcosystem,
-      check: () => !!window.THREE && !!window.THREE.WebGLRenderer && !!window.THREE.OrbitControls
-        && !!window.THREE.EffectComposer && !!window.THREE.UnrealBloomPass && !!window.THREE.RoomEnvironment },
+    { name: 'Three.js + addons', custom: loadThreeEcosystem, check: threeReady },
     { name: 'chess.js', custom: loadChessJs, check: chessUsable },
     { name: 'Tween.js', urls: [
         'https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@18.6.4/dist/tween.umd.js',
@@ -1055,25 +1087,56 @@ const orbitLight = new THREE.PointLight(0xffc98a, 0.45, 26);   // slow ambient t
 orbitLight.position.set(5, 3.5, 0);
 scene.add(orbitLight);
 
-/* Post-processing — subtle bloom */
-const composer = new THREE.EffectComposer(renderer);
-composer.addPass(new THREE.RenderPass(scene, camera));
-const bloomPass = new THREE.UnrealBloomPass(
-  new THREE.Vector2(window.innerWidth, window.innerHeight), 0.32, 0.7, 0.9
-);
-composer.addPass(bloomPass);
+/* Post-processing — subtle bloom (falls back to direct render if unavailable) */
+let composer = null;
+let bloomPass = null;
+try {
+  composer = new THREE.EffectComposer(renderer);
+  composer.addPass(new THREE.RenderPass(scene, camera));
+  bloomPass = new THREE.UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight), 0.32, 0.7, 0.9
+  );
+  composer.addPass(bloomPass);
+} catch (e) {
+  composer = null; bloomPass = null;   // render straight to the canvas instead
+}
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  composer.setSize(window.innerWidth, window.innerHeight);
+  if (composer) composer.setSize(window.innerWidth, window.innerHeight);
 });
 
 /* ---------------- 3. ENVIRONMENT & MATERIALS ---------------- */
-/* Procedural studio environment → crisp reflections in the glass */
+/* Self-built studio environment → crisp reflections in the glass.
+   Built from a few bright panels instead of the RoomEnvironment addon, so it
+   works on every loading path and can never fail to boot. */
+function buildStudioEnv() {
+  const envScene = new THREE.Scene();
+  envScene.background = new THREE.Color(0x10141b);
+  const box = new THREE.BoxGeometry(1, 1, 1);
+  const panel = (hex, boost, pos, scl) => {
+    const mat = new THREE.MeshBasicMaterial({ color: hex });
+    mat.color.multiplyScalar(boost);             // >1 = bright HDR reflection source
+    const m = new THREE.Mesh(box, mat);
+    m.position.set(pos[0], pos[1], pos[2]);
+    m.scale.set(scl[0], scl[1], scl[2]);
+    envScene.add(m);
+  };
+  panel(0xffffff, 4.0, [0, 7, 0], [12, 0.2, 12]);   // top softbox
+  panel(0xbfd8ff, 2.6, [-7, 2, 0], [0.2, 7, 10]);   // cool key side
+  panel(0xffe3bd, 2.4, [7, 2, 0], [0.2, 7, 10]);    // warm fill side
+  panel(0x46586a, 1.4, [0, 2, -8], [14, 7, 0.2]);   // back wall
+  panel(0x2c3a47, 1.0, [0, 2, 8], [14, 7, 0.2]);    // front wall
+  return envScene;
+}
 const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
+try {
+  scene.environment = pmrem.fromScene(buildStudioEnv(), 0.04).texture;
+} catch (e) {
+  scene.environment = null;   // glass still renders via lights + transmission
+}
 
 const matWhiteGlass = new THREE.MeshPhysicalMaterial({
   color: 0xdfeef8, metalness: 0, roughness: 0.13,
@@ -2091,7 +2154,8 @@ function animate() {
 
   updateBursts(dt);
   updateShocks(dt);
-  composer.render();
+  if (composer) composer.render();
+  else renderer.render(scene, camera);
 }
 
 /* ---------------- FINISH ENGINE BOOT ---------------- */
@@ -2321,7 +2385,7 @@ function setSceneEnv(name) {
   keyLight.intensity = e.key;
   keyLight.color.setHex(e.keyColor);
   renderer.toneMappingExposure = e.exposure;
-  bloomPass.strength = e.bloom;
+  if (bloomPass) bloomPass.strength = e.bloom;
   /* environment reflections — pieces full, board duller to avoid glare */
   matWhiteGlass.envMapIntensity = e.envRef;
   matBlackGlass.envMapIntensity = e.envRef;
@@ -2364,7 +2428,7 @@ try {
   hemiLight.intensity = 0.16;
   keyLight.intensity = 0.55;
   renderer.toneMappingExposure = 0.82;
-  bloomPass.strength = 0.6;
+  if (bloomPass) bloomPass.strength = 0.6;
 }
 
 /* expose game-flow entry points to the (already wired) UI */
