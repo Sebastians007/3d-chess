@@ -87,7 +87,16 @@ body{
   border:1px solid var(--panel-border);
   box-shadow:var(--shadow);
   opacity:0; pointer-events:none; transition:opacity .3s ease;
+  display:flex; align-items:center; justify-content:center; gap:14px;
 }
+#banner-retry{
+  display:none; font-family:var(--font-body); font-weight:600; font-size:.78rem;
+  letter-spacing:.1em; text-transform:uppercase; color:#00131f; cursor:pointer;
+  padding:6px 16px; border-radius:8px; border:1px solid rgba(160,235,255,.7);
+  background:linear-gradient(160deg, #43e0ff, #0087d6);
+}
+#banner-retry:hover{ box-shadow:0 0 18px rgba(60,210,255,.5); }
+#boot-banner.with-retry #banner-retry{ display:inline-block; }
 #boot-banner.show{ opacity:1; }
 #boot-banner.error{ border-color:rgba(255,93,93,.55); color:#ffd9d9; }
 
@@ -349,7 +358,7 @@ body{
 <div id="check-vignette"></div>
 
 <!-- Boot status / error banner -->
-<div id="boot-banner"></div>
+<div id="boot-banner"><span id="banner-msg"></span><button id="banner-retry">Retry</button></div>
 
 <!-- ======================= HUD ======================= -->
 <div id="hud">
@@ -568,14 +577,15 @@ const sfx = (() => {
 /* ---- visible boot banner ---- */
 const bannerEl = $('boot-banner');
 let bannerTimer = null;
-function showBanner(msg, isError, autoHideMs) {
-  bannerEl.textContent = msg;
+function showBanner(msg, isError, autoHideMs, withRetry) {
+  $('banner-msg').textContent = msg;
   bannerEl.classList.toggle('error', !!isError);
+  bannerEl.classList.toggle('with-retry', !!withRetry);
   bannerEl.classList.add('show');
   clearTimeout(bannerTimer);
   if (autoHideMs) bannerTimer = setTimeout(hideBanner, autoHideMs);
 }
-function hideBanner() { bannerEl.classList.remove('show'); }
+function hideBanner() { bannerEl.classList.remove('show'); bannerEl.classList.remove('with-retry'); }
 
 /* ---- script loader with per-attempt timeout ---- */
 function loadScript(url, timeoutMs) {
@@ -2343,10 +2353,29 @@ function setSceneEnv(name) {
   if (e.aurora) buildAurora();
   if (e.motes !== 'none') buildMotes(e.motes);
 }
-setSceneEnv(envName);   // apply whichever realm the UI already picked
+/* apply whichever realm the UI already picked — but a broken realm must never
+   block the whole engine: fall back to a plain midnight scene and keep going */
+try {
+  setSceneEnv(envName);
+} catch (realmErr) {
+  console.error('Initial realm build failed — using plain midnight fallback:', realmErr);
+  scene.background.setHex(0x030510);
+  scene.fog.color.setHex(0x030510);
+  hemiLight.intensity = 0.16;
+  keyLight.intensity = 0.55;
+  renderer.toneMappingExposure = 0.82;
+  bloomPass.strength = 0.6;
+}
 
 /* expose game-flow entry points to the (already wired) UI */
-GG.setEnv = setSceneEnv;
+GG.setEnv = (name) => {
+  try { setSceneEnv(name); }
+  catch (realmErr) {
+    console.error('Realm switch failed:', realmErr);
+    try { setSceneEnv('midnight'); } catch (e2) { /* plain scene already set */ }
+    showBanner('That realm glitched — switched back to Midnight.', true, 3200);
+  }
+};
 GG.start  = (lvl) => { resetGame(lvl); introCamera(); };
 GG.undo   = undoMove;
 GG.reset  = () => { if (state.mode === 'playing') resetGame(); };
@@ -2372,12 +2401,17 @@ engineReady = true;
 /* ================= BOOT SEQUENCE ================= */
 applyEnv(loadEnv(), false);                // saved realm before first paint of the menu
 wireUI();                                  // menu is interactive immediately (also refreshes records)
-(async function boot() {
-  showBanner('Loading 3D engine…');
+let bootAttempts = 0;
+async function runBoot() {
+  bootAttempts++;
+  engineFailed = false;
+  showBanner((bootAttempts > 1 ? 'Retrying… ' : '') + 'Loading 3D engine…');
   const failedLib = await loadLibraries();
   if (failedLib) {
+    /* one automatic retry before declaring failure (CDNs are flaky) */
+    if (bootAttempts < 3) { runBoot(); return; }
     engineFailed = true;
-    showBanner('Could not load ' + failedLib + ' from any CDN. Check your internet connection and reload the page.', true);
+    showBanner('Could not load ' + failedLib + ' from any CDN. Check your internet connection.', true, 0, true);
     return;
   }
   try {
@@ -2386,9 +2420,12 @@ wireUI();                                  // menu is interactive immediately (a
   } catch (err) {
     console.error('Glass Gambit boot error:', err);
     engineFailed = true;
-    showBanner('The 3D engine failed to start (' + (err && err.message ? err.message : 'unknown error') + '). Try reloading.', true);
+    showBanner('The 3D engine failed to start (' + (err && err.message ? err.message : 'unknown error') + ').', true, 0, true);
   }
-})();
+}
+/* manual retry = clean full reload (never re-runs a half-initialised engine) */
+$('banner-retry').addEventListener('click', () => location.reload());
+runBoot();
 })();
 </script>
 </body>
