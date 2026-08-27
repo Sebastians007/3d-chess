@@ -17,8 +17,8 @@
    ============================================================ */
 /* ---------- DARK theme: deep night (default) ---------- */
 :root{
-  --bg-0:#04050a;
-  --bg-1:#0b0e16;
+  --bg-0:#020307;
+  --bg-1:#070a10;
   --ink:#eef2f6;
   --ink-dim:#a6b2c0;
   --ink-faint:#66717f;
@@ -64,8 +64,8 @@
 html,body{ height:100%; }
 body{
   background:
-    radial-gradient(1200px 800px at 78% -10%, color-mix(in srgb, var(--ice) 22%, transparent), transparent 60%),
-    radial-gradient(1000px 700px at 12% 110%, color-mix(in srgb, var(--gold) 16%, transparent), transparent 55%),
+    radial-gradient(1200px 800px at 78% -10%, color-mix(in srgb, var(--ice) 10%, transparent), transparent 60%),
+    radial-gradient(1000px 700px at 12% 110%, color-mix(in srgb, var(--gold) 8%, transparent), transparent 55%),
     linear-gradient(175deg, var(--bg-1), var(--bg-0) 70%);
   color:var(--ink);
   font-family:var(--font-body);
@@ -740,8 +740,10 @@ function refreshMenuStats() {
 /* Night = near-black with cool moonlight and a bright starfield.
    Day  = bright airy sky with warm sunlight. Deliberately extreme contrast. */
 const SCENE_THEMES = {
-  dark:  { bg: 0x02040a, ground: 0x060a14, hemi: 0.18, key: 0.5,  keyColor: 0x9db8ff, exposure: 0.85, bloom: 0.55, dust: 0.8,  dustColor: 0xcfe0ff },
-  light: { bg: 0xe9f1f5, ground: 0xcfdde4, hemi: 1.0,  key: 1.4,  keyColor: 0xfff3d9, exposure: 1.12, bloom: 0.06, dust: 0.15, dustColor: 0x9fd8e8 }
+  /* ground == bg so the whole dome reads as ONE shade of night; `env` dims the
+     environment reflections so the glass goes dark instead of glowing studio-bright */
+  dark:  { bg: 0x02040a, ground: 0x02040a, hemi: 0.16, key: 0.55, keyColor: 0x9db8ff, exposure: 0.82, bloom: 0.6,  env: 0.36, fog: 0.02,  dust: 0.85, dustColor: 0xcfe0ff },
+  light: { bg: 0xe9f1f5, ground: 0xcfdde4, hemi: 1.0,  key: 1.4,  keyColor: 0xfff3d9, exposure: 1.15, bloom: 0.05, env: 1.0,  fog: 0.012, dust: 0.15, dustColor: 0x9fd8e8 }
 };
 let theme = 'dark';
 function applyTheme(name, persist) {
@@ -1002,7 +1004,7 @@ const matPedestal = new THREE.MeshPhysicalMaterial({
   transmission: 0.25, thickness: 0.6, ior: 1.5,
   clearcoat: 0.35, clearcoatRoughness: 0.4, envMapIntensity: 0.7
 });
-const groundMat = new THREE.MeshStandardMaterial({ color: 0x0a1a24, roughness: 0.95 });
+const groundMat = new THREE.MeshStandardMaterial({ color: 0x02040a, roughness: 0.95, envMapIntensity: 0.18 });
 
 /* Additive glow helpers */
 function glowMaterial(color, opacity) {
@@ -1972,12 +1974,21 @@ function setSceneTheme(name) {
   const t = SCENE_THEMES[name] || SCENE_THEMES.dark;
   scene.background.setHex(t.bg);
   scene.fog.color.setHex(t.bg);
+  if (t.fog) scene.fog.density = t.fog;
   groundMat.color.setHex(t.ground);
   hemiLight.intensity = t.hemi;
   keyLight.intensity = t.key;
   if (t.keyColor) keyLight.color.setHex(t.keyColor);
   renderer.toneMappingExposure = t.exposure;
   bloomPass.strength = t.bloom;
+  /* environment reflections: bright studio by day, barely-there by night.
+     Squares and pieces use per-object clones, so those must be updated too. */
+  if (t.env != null) {
+    [matWhiteGlass, matBlackGlass, matSquareLight, matSquareDark, matPedestal].forEach((m) => { m.envMapIntensity = t.env; });
+    groundMat.envMapIntensity = t.env * 0.5;
+    for (const sq in squareMats) squareMats[sq].envMapIntensity = t.env;
+    piecesBySquare.forEach((p) => { p.material.envMapIntensity = t.env; });
+  }
   if (dust) {
     dust.material.opacity = t.dust;
     if (t.dustColor) dust.material.color.setHex(t.dustColor);
