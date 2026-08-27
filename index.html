@@ -1319,11 +1319,17 @@ const checkDisc = new THREE.Mesh(new THREE.CircleGeometry(0.44, 28), glowMateria
 checkDisc.rotation.x = -Math.PI / 2; checkDisc.position.y = 0.02;
 checkDisc.visible = false; checkDisc.renderOrder = 5; boardGroup.add(checkDisc);
 
-/* Legal-move markers */
+/* Legal-move markers — use NORMAL (not additive) blending so they stay vivid
+   on white tiles too; additive light just washes out on bright surfaces. */
 const markerDiscGeo = new THREE.CircleGeometry(0.17, 24);
 const markerRingGeo = new THREE.RingGeometry(0.33, 0.43, 28);
-const markerDiscMat = glowMaterial(0x8fe0f2, 0.85);
-const markerRingMat = glowMaterial(0xff7a6b, 0.9);
+function markerMaterial(color) {
+  return new THREE.MeshBasicMaterial({
+    color, transparent: true, opacity: 1.0, depthWrite: false, side: THREE.DoubleSide
+  });
+}
+const markerDiscMat = markerMaterial(0x00b4ff);   // vivid electric blue (quiet moves)
+const markerRingMat = markerMaterial(0xff2244);   // vivid red (captures)
 const markers = [];
 function clearMarkers() {
   markers.forEach((m) => boardGroup.remove(m));
@@ -2200,7 +2206,8 @@ function animate() {
   markers.forEach((m) => {
     const s = 1 + 0.14 * Math.sin(elapsed * 5 + m.userData.phase);
     m.scale.setScalar(s);
-    m.material.opacity = 0.6 + 0.3 * Math.sin(elapsed * 5 + m.userData.phase);
+    /* keep opacity high (0.72–1.0) so markers stay legible on white tiles */
+    m.material.opacity = 0.86 + 0.14 * Math.sin(elapsed * 5 + m.userData.phase);
   });
   lastMoveGlows.forEach((g) => { g.material.opacity = 0.24 + 0.08 * Math.sin(elapsed * 2.4); });
   selectGlow.material.opacity = 0.28 + 0.12 * Math.sin(elapsed * 4);
