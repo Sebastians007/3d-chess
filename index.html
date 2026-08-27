@@ -2318,6 +2318,21 @@ function setSceneEnv(name) {
   matPedestal.envMapIntensity = e.envRef * 0.55;
   for (const sq in squareMats) squareMats[sq].envMapIntensity = e.envRef * 0.5;
   piecesBySquare.forEach((p) => { p.material.envMapIntensity = e.envRef; });
+  /* glass tint: pale ice reads beautifully against night, but vanishes on a
+     bright day sky — so in daylight realms the white army swaps to blue-graphite
+     glass (black stays obsidian). Promotion pieces inherit this automatically
+     because they clone the already-tinted base material. */
+  const daylight = (e.ui === 'light');
+  const wCol = daylight ? 0x55616d : 0xdfeef8;
+  const wAtt = daylight ? 0x3d4a55 : 0xcfeaff;
+  matWhiteGlass.color.setHex(wCol);
+  matWhiteGlass.attenuationColor.setHex(wAtt);
+  piecesBySquare.forEach((p) => {
+    if (p.color === 'w') {
+      p.material.color.setHex(wCol);
+      p.material.attenuationColor.setHex(wAtt);
+    }
+  });
   /* terrain */
   if (e.water) buildWater(e.bg);
   else envGround(e.ground);
