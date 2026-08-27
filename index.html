@@ -15,25 +15,31 @@
    GLASS GAMBIT — UI STYLES
    Deep petrol palette · amber gold + glacial ice accents
    ============================================================ */
+/* ---------- DARK theme: true near-black graphite (default) ---------- */
 :root{
-  --bg-0:#050e14;
-  --bg-1:#0b2030;
-  --ink:#e9f4f7;
-  --ink-dim:#9db7c2;
-  --ink-faint:#5f7b88;
+  --bg-0:#07080b;
+  --bg-1:#11141b;
+  --ink:#eef2f6;
+  --ink-dim:#a6b2c0;
+  --ink-faint:#66717f;
   --gold:#e8b04b;
   --gold-hi:#f5d28a;
   --ice:#7fd6e8;
   --ice-hi:#c9f0fa;
   --danger:#ff5d5d;
-  --panel-bg:linear-gradient(160deg, rgba(17,38,51,.66), rgba(8,20,29,.58));
-  --panel-border:rgba(158,217,235,.16);
+  --panel-bg:linear-gradient(160deg, rgba(24,29,38,.78), rgba(12,14,19,.72));
+  --panel-border:rgba(150,180,210,.14);
+  --btn-bg:linear-gradient(160deg, rgba(34,41,54,.8), rgba(18,22,30,.72));
+  --btn-border:rgba(150,180,210,.2);
+  --scrim:rgba(4,5,8,.66);
+  --menu-scrim:rgba(5,6,9,.78);
+  --shadow:0 18px 50px rgba(0,0,0,.55);
   --panel-radius:14px;
   --font-display:"Cinzel", serif;
   --font-body:"Jost", sans-serif;
   --scene-glow:rgba(127,214,232,.25);
 }
-/* ---------- light theme (porcelain glass in daylight) ---------- */
+/* ---------- LIGHT theme: porcelain glass in daylight ---------- */
 [data-theme="light"]{
   --bg-0:#dce6ec;
   --bg-1:#f2f7fa;
@@ -45,8 +51,13 @@
   --ice:#0f7d99;
   --ice-hi:#0a5d73;
   --danger:#c22f2f;
-  --panel-bg:linear-gradient(160deg, rgba(255,255,255,.78), rgba(231,241,246,.66));
-  --panel-border:rgba(18,44,58,.16);
+  --panel-bg:linear-gradient(160deg, rgba(255,255,255,.85), rgba(231,241,246,.72));
+  --panel-border:rgba(18,44,58,.18);
+  --btn-bg:linear-gradient(160deg, rgba(255,255,255,.9), rgba(228,239,245,.78));
+  --btn-border:rgba(18,44,58,.22);
+  --scrim:rgba(214,226,233,.55);
+  --menu-scrim:rgba(226,236,242,.72);
+  --shadow:0 18px 44px rgba(24,52,70,.22);
   --scene-glow:rgba(15,125,153,.18);
 }
 *{ box-sizing:border-box; margin:0; padding:0; }
@@ -72,9 +83,9 @@ body{
   z-index:70; max-width:min(560px, 92vw); text-align:center;
   padding:12px 22px; border-radius:11px;
   font-size:.86rem; letter-spacing:.05em; color:var(--ink);
-  background:linear-gradient(160deg, rgba(20,44,58,.92), rgba(10,24,34,.88));
-  border:1px solid rgba(158,217,235,.3);
-  box-shadow:0 14px 40px rgba(0,0,0,.5);
+  background:var(--panel-bg);
+  border:1px solid var(--panel-border);
+  box-shadow:var(--shadow);
   opacity:0; pointer-events:none; transition:opacity .3s ease;
 }
 #boot-banner.show{ opacity:1; }
@@ -87,15 +98,15 @@ body{
   -webkit-backdrop-filter:blur(16px) saturate(150%);
   border:1px solid var(--panel-border);
   border-radius:var(--panel-radius);
-  box-shadow:0 18px 50px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
+  box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,.06);
 }
 .btn{
   display:inline-flex; align-items:center; gap:8px;
   font-family:var(--font-body); font-weight:500; font-size:.86rem; letter-spacing:.06em;
   color:var(--ink); text-transform:uppercase;
   padding:10px 16px; border-radius:10px; cursor:pointer;
-  background:linear-gradient(160deg, rgba(26,52,68,.65), rgba(12,28,40,.6));
-  border:1px solid rgba(158,217,235,.22);
+  background:var(--btn-bg);
+  border:1px solid var(--btn-border);
   backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
   transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease, color .18s ease;
 }
@@ -185,7 +196,7 @@ body{
 /* ---------- overlays ---------- */
 .overlay{
   position:fixed; inset:0; z-index:40; display:flex; align-items:center; justify-content:center;
-  padding:20px; background:rgba(4,11,17,.6);
+  padding:20px; background:var(--scrim);
   backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px);
   opacity:0; pointer-events:none; transition:opacity .45s ease;
 }
@@ -195,9 +206,9 @@ body{
 
 /* ---------- start menu ---------- */
 #menu-overlay{ background:
-  radial-gradient(900px 600px at 80% 10%, rgba(38,90,110,.4), transparent 60%),
-  radial-gradient(800px 600px at 10% 95%, rgba(150,105,35,.22), transparent 55%),
-  rgba(4,11,17,.72); }
+  radial-gradient(900px 600px at 80% 10%, color-mix(in srgb, var(--ice) 26%, transparent), transparent 60%),
+  radial-gradient(800px 600px at 10% 95%, color-mix(in srgb, var(--gold) 20%, transparent), transparent 55%),
+  var(--menu-scrim); }
 #menu-card{ width:min(760px, 94vw); max-height:92vh; overflow-y:auto; padding:clamp(24px,4vw,44px); position:relative; }
 #menu-card::-webkit-scrollbar{ width:5px; } #menu-card::-webkit-scrollbar-thumb{ background:rgba(127,214,232,.25); border-radius:4px; }
 .kicker{ font-size:.74rem; font-weight:600; letter-spacing:.42em; text-transform:uppercase; color:var(--gold); margin-bottom:10px; }
@@ -256,6 +267,10 @@ body{
   transition:transform .16s ease, border-color .16s ease, box-shadow .16s ease;
 }
 [data-theme="light"] .seg-chip{ background:linear-gradient(160deg, rgba(255,255,255,.6), rgba(226,238,244,.5)); }
+[data-theme="light"] .rank-chip,
+[data-theme="light"] .seg-chip,
+[data-theme="light"] .promo-btn{ border-color:rgba(18,44,58,.18); }
+[data-theme="light"] .promo-btn{ background:linear-gradient(165deg, rgba(255,255,255,.7), rgba(226,238,244,.6)); }
 .seg-chip:hover{ transform:translateY(-2px); border-color:color-mix(in srgb, var(--ice) 55%, transparent); }
 .seg-chip.selected{ border-color:color-mix(in srgb, var(--gold) 70%, transparent); color:var(--gold-hi);
   box-shadow:0 0 0 1px color-mix(in srgb, var(--gold) 30%, transparent), 0 8px 22px rgba(0,0,0,.3); }
@@ -338,9 +353,9 @@ body{
         <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
         <span class="btn-label">Reset</span>
       </button>
-      <button class="btn" id="btn-pgn" title="Download PGN">
+      <button class="btn" id="btn-pgn" title="Download this game as a .PGN file (chess notation text — not an image)">
         <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
-        <span class="btn-label">Save PGN</span>
+        <span class="btn-label">Save Game (.pgn)</span>
       </button>
       <button class="btn" id="btn-theme" title="Toggle light / dark theme">
         <svg viewBox="0 0 24 24" id="theme-icon-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
@@ -446,9 +461,9 @@ body{
         <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
         <span class="btn-label">Rematch</span>
       </button>
-      <button class="btn" id="btn-pgn2">
+      <button class="btn" id="btn-pgn2" title="Download this game as a .PGN file (chess notation text — not an image)">
         <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
-        <span class="btn-label">Save PGN</span>
+        <span class="btn-label">Save Game (.pgn)</span>
       </button>
       <button class="btn" id="btn-menu2">
         <svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></svg>
@@ -723,7 +738,7 @@ function refreshMenuStats() {
 
 /* ---- theme: dark petrol (default) / light porcelain ---- */
 const SCENE_THEMES = {
-  dark:  { bg: 0x07141d, ground: 0x0a1a24, hemi: 0.5,  key: 1.0,  exposure: 1.02, bloom: 0.32 },
+  dark:  { bg: 0x0a0c10, ground: 0x10131a, hemi: 0.5,  key: 1.0,  exposure: 1.02, bloom: 0.32 },
   light: { bg: 0xdfe9ee, ground: 0xc2d1d9, hemi: 0.85, key: 1.25, exposure: 1.08, bloom: 0.16 }
 };
 let theme = 'dark';
@@ -900,8 +915,8 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x07141d);
-scene.fog = new THREE.FogExp2(0x07141d, 0.016);
+scene.background = new THREE.Color(0x0a0c10);
+scene.fog = new THREE.FogExp2(0x0a0c10, 0.016);
 
 const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 200);
 camera.position.set(0, 12.5, 17.5);
@@ -1205,6 +1220,7 @@ function spawnPiece(type, color, square) {
   group.position.set(p.x, 0, p.z);
   const piece = { id: ++pieceIdSeq, type, color, square, group, material };
   piece.group.userData.normScale = group.scale.x;
+  piece.group.userData.isPieceGroup = true;   // lets clearAllPieces sweep orphans
   group.traverse((o) => { if (o.isMesh) o.userData = { kind: 'piece', pieceId: piece.id }; });
   scene.add(group);
   piecesBySquare.set(square, piece);
@@ -1223,6 +1239,15 @@ function clearAllPieces() {
   piecesBySquare.forEach((piece) => { scene.remove(piece.group); piece.material.dispose(); });
   piecesBySquare.clear();
   piecesById.clear();
+  /* safety sweep: remove any piece group left orphaned in the scene
+     (defends against any map/scene desync so a reset always leaves a clean board) */
+  for (let i = scene.children.length - 1; i >= 0; i--) {
+    const child = scene.children[i];
+    if (child.userData && child.userData.isPieceGroup) {
+      scene.remove(child);
+      child.traverse((o) => { if (o.isMesh && o.material && o.material.dispose) o.material.dispose(); });
+    }
+  }
 }
 function rebuildPiecesFromGame() {
   clearAllPieces();
@@ -1385,16 +1410,13 @@ function animateMove(mv, onDone) {
   const piece = piecesBySquare.get(mv.from);
   if (!piece) { state.busy = false; onDone(); return; }
 
-  /* re-key the piece immediately (input is locked while busy) */
-  piecesBySquare.delete(mv.from);
-  piece.square = mv.to;
-  piecesBySquare.set(mv.to, piece);
-
-  /* captured piece — particle burst + shrink-out */
+  /* CAPTURE FIRST — the captured piece occupies mv.to, so we must look it up
+     (and remove it) BEFORE re-keying the moving piece into that square.
+     Otherwise the map lookup returns the mover and it deletes itself. */
   if (mv.captured) {
     const capSq = mv.flags.indexOf('e') >= 0 ? mv.to[0] + mv.from[1] : mv.to;
     const cap = piecesBySquare.get(capSq);
-    if (cap) {
+    if (cap && cap !== piece) {
       const at = cap.group.position.clone(); at.y += 0.45;
       spawnBurst(at, cap.color === 'w' ? 0xcfeaff : 0x6fd8c8, 30, 2.4);
       piecesBySquare.delete(capSq);
@@ -1406,6 +1428,11 @@ function animateMove(mv, onDone) {
         .start();
     }
   }
+
+  /* then re-key the moving piece (input is locked while busy) */
+  piecesBySquare.delete(mv.from);
+  piece.square = mv.to;
+  piecesBySquare.set(mv.to, piece);
 
   /* glide with a small hop — never a teleport */
   const from = squareToXZ(mv.from), to = squareToXZ(mv.to);
