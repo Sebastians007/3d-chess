@@ -41,11 +41,11 @@
 }
 /* ---------- LIGHT theme: porcelain glass in daylight ---------- */
 [data-theme="light"]{
-  --bg-0:#e4edf2;
-  --bg-1:#f8fbfd;
-  --ink:#12242e;
-  --ink-dim:#41596a;
-  --ink-faint:#7d95a3;
+  --bg-0:#c9d6dd;
+  --bg-1:#e6edf1;
+  --ink:#0e2130;
+  --ink-dim:#31485c;
+  --ink-faint:#64808f;
   --gold:#9a6514;
   --gold-hi:#7a4e0c;
   --ice:#0f7d99;
@@ -743,7 +743,9 @@ const SCENE_THEMES = {
   /* ground == bg so the whole dome reads as ONE shade of night; `env` dims the
      environment reflections so the glass goes dark instead of glowing studio-bright */
   dark:  { bg: 0x02040a, ground: 0x02040a, hemi: 0.16, key: 0.55, keyColor: 0x9db8ff, exposure: 0.82, bloom: 0.6,  env: 0.36, fog: 0.02,  dust: 0.85, dustColor: 0xcfe0ff },
-  light: { bg: 0xe9f1f5, ground: 0xcfdde4, hemi: 1.0,  key: 1.4,  keyColor: 0xfff3d9, exposure: 1.15, bloom: 0.05, env: 1.0,  fog: 0.012, dust: 0.15, dustColor: 0x9fd8e8 }
+  /* mid-tone daylight, not whiteout: steel sky + slate ground so the pale board
+     tiles keep contrast and nothing blooms into a light-box */
+  light: { bg: 0xc2d2db, ground: 0x8fa4af, hemi: 0.85, key: 1.18, keyColor: 0xfff3d9, exposure: 1.0, bloom: 0.05, env: 0.9, fog: 0.014, dust: 0.15, dustColor: 0x9fd8e8 }
 };
 let theme = 'dark';
 function applyTheme(name, persist) {
@@ -1982,11 +1984,14 @@ function setSceneTheme(name) {
   renderer.toneMappingExposure = t.exposure;
   bloomPass.strength = t.bloom;
   /* environment reflections: bright studio by day, barely-there by night.
-     Squares and pieces use per-object clones, so those must be updated too. */
+     Pieces take the full value, but squares/pedestal/ground stay duller —
+     glossy board tiles are exactly what caused the white-glare bug. */
   if (t.env != null) {
-    [matWhiteGlass, matBlackGlass, matSquareLight, matSquareDark, matPedestal].forEach((m) => { m.envMapIntensity = t.env; });
-    groundMat.envMapIntensity = t.env * 0.5;
-    for (const sq in squareMats) squareMats[sq].envMapIntensity = t.env;
+    matWhiteGlass.envMapIntensity = t.env;
+    matBlackGlass.envMapIntensity = t.env;
+    matPedestal.envMapIntensity = t.env * 0.55;
+    groundMat.envMapIntensity = t.env * 0.4;
+    for (const sq in squareMats) squareMats[sq].envMapIntensity = t.env * 0.5;
     piecesBySquare.forEach((p) => { p.material.envMapIntensity = t.env; });
   }
   if (dust) {
