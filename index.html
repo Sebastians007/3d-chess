@@ -1600,6 +1600,30 @@ function clearSelection() {
 }
 
 /* ---------------- 7. MOVE ANIMATION & PARTICLES ---------------- */
+/* capture shockwave rings (declared early — the render loop ticks every frame,
+   so every effect-system state must exist before animate() can run) */
+const shockGeo = new THREE.RingGeometry(0.42, 0.5, 40);
+const shocks = [];
+function spawnShockwave(position, color) {
+  const mesh = new THREE.Mesh(shockGeo, glowMaterial(color, 0.85));
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.set(position.x, 0.03, position.z);
+  mesh.renderOrder = 9;
+  scene.add(mesh);
+  shocks.push({ mesh, life: 0 });
+}
+function updateShocks(dt) {
+  for (let i = shocks.length - 1; i >= 0; i--) {
+    const s = shocks[i];
+    s.life += dt;
+    const t = s.life / 0.55;
+    if (t >= 1) { scene.remove(s.mesh); s.mesh.material.dispose(); shocks.splice(i, 1); continue; }
+    const sc = 1 + t * 7;
+    s.mesh.scale.set(sc, sc, sc);
+    s.mesh.material.opacity = (1 - t) * 0.85;
+  }
+}
+
 const bursts = [];
 function spawnBurst(position, color, count, speed, ttl) {
   const n = count || 26;
@@ -2403,28 +2427,6 @@ function buildMotes(kind) {
   const pts = new THREE.Points(g, m);
   pts.userData.mote = { spd, ph };
   envGroup.add(pts);
-}
-/* capture shockwave rings */
-const shockGeo = new THREE.RingGeometry(0.42, 0.5, 40);
-const shocks = [];
-function spawnShockwave(position, color) {
-  const mesh = new THREE.Mesh(shockGeo, glowMaterial(color, 0.85));
-  mesh.rotation.x = -Math.PI / 2;
-  mesh.position.set(position.x, 0.03, position.z);
-  mesh.renderOrder = 9;
-  scene.add(mesh);
-  shocks.push({ mesh, life: 0 });
-}
-function updateShocks(dt) {
-  for (let i = shocks.length - 1; i >= 0; i--) {
-    const s = shocks[i];
-    s.life += dt;
-    const t = s.life / 0.55;
-    if (t >= 1) { scene.remove(s.mesh); s.mesh.material.dispose(); shocks.splice(i, 1); continue; }
-    const sc = 1 + t * 7;
-    s.mesh.scale.set(sc, sc, sc);
-    s.mesh.material.opacity = (1 - t) * 0.85;
-  }
 }
 /* rebuild the whole 3D world for a realm */
 function setSceneEnv(name) {
