@@ -641,12 +641,15 @@ async function loadChessJs() {
   }
   /* 2) CommonJS builds → executed against a temporary exports shim */
   for (const url of CHESS_CJS_URLS) {
+    const prevModule = window.module, prevExports = window.exports;
     window.__ggCjs = { exports: {} };
     window.module = window.__ggCjs;
     window.exports = window.__ggCjs.exports;
     await loadScript(url);
     const ex = (window.__ggCjs && window.__ggCjs.exports) || {};
-    delete window.module; delete window.exports; delete window.__ggCjs;
+    if (prevModule === undefined) delete window.module; else window.module = prevModule;
+    if (prevExports === undefined) delete window.exports; else window.exports = prevExports;
+    delete window.__ggCjs;
     if (typeof ex.Chess === 'function') { window.Chess = ex; return true; }
     if (typeof ex.default === 'function') { window.Chess = { Chess: ex.default }; return true; }
   }
@@ -688,11 +691,13 @@ const THREE_GLOBAL_BASES = [
   'https://unpkg.com/three@0.147.0/'
 ];
 async function loadThreeGlobals() {
-  if (threeReady()) return true;
+  if (window.THREE && window.THREE.WebGLRenderer && threeReady()) return true;
   for (const base of THREE_GLOBAL_BASES) {
     let ok = true;
-    for (const f of THREE_R147_FILES) {
-      if (!(await loadScript(base + f, 15000))) { ok = false; break; }
+    for (let i = 0; i < THREE_R147_FILES.length; i++) {
+      const isCore = (i === 0);
+      /* generous timeout for the ~640 KB core, tighter for addons */
+      if (!(await loadScript(base + THREE_R147_FILES[i], isCore ? 30000 : 12000))) { ok = false; break; }
     }
     if (ok && threeReady()) return true;
   }
@@ -742,13 +747,18 @@ async function loadThreeEcosystem() {
       return true;
     } catch (e) { /* fall through to the next source */ }
   }
-  return false;
+  /* addons failed everywhere — proceed degraded (no bloom / fallback orbit)
+     rather than refusing to boot, as long as the core renderer is usable */
+  return !!(window.THREE && window.THREE.WebGLRenderer);
 }
 
 /* ---- library manifest: every lib has fallback CDNs + a global sanity check ---- */
 async function loadLibraries() {
   const steps = [
-    { name: 'Three.js + addons', custom: loadThreeEcosystem, check: threeReady },
+    /* the CORE renderer is the only hard requirement — if addons (bloom,
+       orbit controls) can't load, initGame degrades gracefully instead of dying */
+    { name: 'Three.js', custom: loadThreeEcosystem,
+      check: () => !!(window.THREE && window.THREE.WebGLRenderer) },
     { name: 'chess.js', custom: loadChessJs, check: chessUsable },
     { name: 'Tween.js', urls: [
         'https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@18.6.4/dist/tween.umd.js',
@@ -1057,7 +1067,49 @@ const uTime = { value: 0 };   // shared clock for shaders (grass sway, water, st
 const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 200);
 camera.position.set(0, 12.5, 17.5);
 
-const controls = new THREE.OrbitControls(camera, canvas);
+/* Fallback orbit controls — a dependency-free look-around used only if the
+   OrbitControls addon failed to load, so the game always stays playable. */
+function createMinimalOrbit(cam, el) {
+  const ctl = {
+    target: new THREE.Vector3(0, 0.1, 0),
+    enabled: true, enableDamping: true, dampingFactor: 0.08, enablePan: false,
+    minDistance: 6.5, maxDistance: 20, minPolarAngle: 0.18,
+    maxPolarAngle: Math.PI / 2 - 0.12, rotateSpeed: 0.75
+  };
+  const dTheta = { v: 0 }, dPhi = { v: 0 };
+  let dragging = false, px = 0, py = 0;
+  el.addEventListener('pointerdown', (e) => { dragging = true; px = e.clientX; py = e.clientY; });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  el.addEventListener('pointermove', (e) => {
+    if (!dragging || !ctl.enabled) return;
+    dTheta.v -= 2 * Math.PI * (e.clientX - px) / el.clientHeight * ctl.rotateSpeed;
+    dPhi.v   -= 2 * Math.PI * (e.clientY - py) / el.clientHeight * ctl.rotateSpeed;
+    px = e.clientX; py = e.clientY;
+  });
+  el.addEventListener('wheel', (e) => {
+    if (!ctl.enabled) return;
+    const offset = cam.position.clone().sub(ctl.target);
+    offset.multiplyScalar(e.deltaY > 0 ? 1.1 : 0.9);
+    const r = offset.length();
+    if (r >= ctl.minDistance && r <= ctl.maxDistance) cam.position.copy(ctl.target).add(offset);
+  }, { passive: true });
+  ctl.update = function () {
+    const offset = cam.position.clone().sub(ctl.target);
+    const s = new THREE.Spherical().setFromVector3(offset);
+    s.theta += dTheta.v;
+    s.phi   += dPhi.v;
+    s.phi = Math.max(ctl.minPolarAngle, Math.min(ctl.maxPolarAngle, s.phi));
+    s.makeSafe();
+    cam.position.setFromSpherical(s).add(ctl.target);
+    cam.lookAt(ctl.target);
+    dTheta.v *= (1 - ctl.dampingFactor);
+    dPhi.v   *= (1 - ctl.dampingFactor);
+  };
+  return ctl;
+}
+const controls = window.THREE.OrbitControls
+  ? new THREE.OrbitControls(camera, canvas)
+  : createMinimalOrbit(camera, canvas);
 controls.target.set(0, 0.1, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
